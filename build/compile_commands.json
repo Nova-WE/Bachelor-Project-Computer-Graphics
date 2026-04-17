@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/Users/elias/Documents/Persönlich/Projects/RayTracing-in-a-Weekend/build",
+  "command": "/usr/bin/clang++   -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -o CMakeFiles/main.dir/src/main.cc.o -c /Users/elias/Documents/Persönlich/Projects/RayTracing-in-a-Weekend/src/main.cc",
+  "file": "/Users/elias/Documents/Persönlich/Projects/RayTracing-in-a-Weekend/src/main.cc",
+  "output": "CMakeFiles/main.dir/src/main.cc.o"
+}
+]

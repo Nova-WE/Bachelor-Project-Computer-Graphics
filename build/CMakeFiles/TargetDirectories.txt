@@ -1,0 +1,3 @@
+/Users/elias/Documents/Persönlich/Projects/RayTracing-in-a-Weekend/build/CMakeFiles/main.dir
+/Users/elias/Documents/Persönlich/Projects/RayTracing-in-a-Weekend/build/CMakeFiles/edit_cache.dir
+/Users/elias/Documents/Persönlich/Projects/RayTracing-in-a-Weekend/build/CMakeFiles/rebuild_cache.dir
