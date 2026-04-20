@@ -1,8 +1,8 @@
 [
 {
-  "directory": "/Users/elias/Documents/Persönlich/Projects/RayTracing-in-a-Weekend/build",
-  "command": "/usr/bin/clang++   -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -o CMakeFiles/main.dir/src/main.cc.o -c /Users/elias/Documents/Persönlich/Projects/RayTracing-in-a-Weekend/src/main.cc",
-  "file": "/Users/elias/Documents/Persönlich/Projects/RayTracing-in-a-Weekend/src/main.cc",
+  "directory": "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/build",
+  "command": "/usr/bin/clang++   -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -o CMakeFiles/main.dir/src/main.cc.o -c \"/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/src/main.cc\"",
+  "file": "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/src/main.cc",
   "output": "CMakeFiles/main.dir/src/main.cc.o"
 }
 ]

@@ -1,4 +1,4 @@
-# Install script for directory: /Users/elias/Documents/Persönlich/Projects/RayTracing-in-a-Weekend
+# Install script for directory: /Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/elias/Documents/Persönlich/Projects/RayTracing-in-a-Weekend/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

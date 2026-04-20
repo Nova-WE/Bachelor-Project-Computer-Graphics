@@ -55,7 +55,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/Users/elias/Documents/Perso\u0308nlich/Projects/RayTracing-in-a-Weekend/build"
+			"value" : "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/build"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -491,7 +491,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/Users/elias/Documents/Perso\u0308nlich/Projects/RayTracing-in-a-Weekend/build/CMakeFiles/pkgRedirects"
+			"value" : "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/build/CMakeFiles/pkgRedirects"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -551,7 +551,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/Users/elias/Documents/Perso\u0308nlich/Projects/RayTracing-in-a-Weekend"
+			"value" : "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics"
 		},
 		{
 			"name" : "CMAKE_INSTALL_NAME_TOOL",
@@ -775,7 +775,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : ""
+			"value" : "15.7"
 		},
 		{
 			"name" : "CMAKE_OSX_SYSROOT",
@@ -787,7 +787,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk"
+			"value" : "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk"
 		},
 		{
 			"name" : "CMAKE_PLATFORM_INFO_INITIALIZED",
@@ -1134,78 +1134,6 @@
 			"value" : "FALSE"
 		},
 		{
-			"name" : "Project_BINARY_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "/Users/elias/Documents/Perso\u0308nlich/Projects/RayTracing-in-a-Weekend/build"
-		},
-		{
-			"name" : "Project_IS_TOP_LEVEL",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "ON"
-		},
-		{
-			"name" : "Project_SOURCE_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "/Users/elias/Documents/Perso\u0308nlich/Projects/RayTracing-in-a-Weekend"
-		},
-		{
-			"name" : "RayTracing_BINARY_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "/Users/elias/Documents/Perso\u0308nlich/Projects/RayTracing-in-a-Weekend/build"
-		},
-		{
-			"name" : "RayTracing_IS_TOP_LEVEL",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "ON"
-		},
-		{
-			"name" : "RayTracing_SOURCE_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "/Users/elias/Documents/Perso\u0308nlich/Projects/RayTracing-in-a-Weekend"
-		},
-		{
 			"name" : "RayTracing_in_a_Weekend_BINARY_DIR",
 			"properties" : 
 			[
@@ -1215,7 +1143,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/Users/elias/Documents/Perso\u0308nlich/Projects/RayTracing-in-a-Weekend/build"
+			"value" : "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/build"
 		},
 		{
 			"name" : "RayTracing_in_a_Weekend_IS_TOP_LEVEL",
@@ -1239,43 +1167,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/Users/elias/Documents/Perso\u0308nlich/Projects/RayTracing-in-a-Weekend"
-		},
-		{
-			"name" : "Raytra_BINARY_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "/Users/elias/Documents/Perso\u0308nlich/Projects/RayTracing-in-a-Weekend/build"
-		},
-		{
-			"name" : "Raytra_IS_TOP_LEVEL",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "ON"
-		},
-		{
-			"name" : "Raytra_SOURCE_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "/Users/elias/Documents/Perso\u0308nlich/Projects/RayTracing-in-a-Weekend"
+			"value" : "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics"
 		}
 	],
 	"kind" : "cache",

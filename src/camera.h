@@ -1,6 +1,9 @@
 #if !defined(CAMERA_H)
 #define CAMERA_H
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../lib/stb_image_write.h"
+
 #include "hittable.h"
 #include "material.h"
 
@@ -24,21 +27,23 @@ public:
     initialize();
 
     // Render final image
-    std::cout << "P3\n"
-              << imageWidth << " " << imageHeight << "\n255" << std::endl;
+    unsigned char data[imageWidth * imageHeight * 3];
 
     for (int j = 0; j < imageHeight; j++) {
       std::clog << "\nScanlines remaining: " << imageHeight - j << " "
                 << std::flush;
       for (int i = 0; i < imageWidth; i++) {
         color pixelColor(0, 0, 0);
-        for (int sample = 0; sample < samplesPerPixel; sample++) {
+        int index = (j * imageWidth + i) * 3;
+        for (int sample = 0; sample < samplesPerPixel; sample++)
+        {
           ray r = getRay(i, j);
           pixelColor += rayColor(r, maxDepth, world);
         }
-        write_color(std::cout, pixelColor * pixelSampleScale);
+        write_color(data, index, pixelColor * pixelSampleScale);
       }
     }
+    stbi_write_png("../images/output.png", imageWidth, imageHeight, 3, data, imageWidth * 3);
     std::clog << "\rDone.                   \n";
   }
 

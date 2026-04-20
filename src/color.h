@@ -10,7 +10,7 @@ inline double linearToGamma(double linear_t) {
     return linear_t > 0 ? sqrt(linear_t) : 0;
 }
 
-void write_color(std::ostream& out, const color& pixelColor) {
+void write_color(unsigned char* data, int index, const color& pixelColor) {
     auto r = pixelColor.x();
     auto g = pixelColor.y();
     auto b = pixelColor.z();
@@ -25,7 +25,9 @@ void write_color(std::ostream& out, const color& pixelColor) {
     double gByte = int(256 * intensity.clamp(g));
     double bByte = int(256 * intensity.clamp(b));
 
-    out << rByte << " " << gByte << " " << bByte << "\n";
+    data[index] = rByte;
+    data[index + 1] = gByte;
+    data[index + 2] = bByte;
 }
 
 #endif // COLOR_H
