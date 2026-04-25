@@ -73,15 +73,15 @@ CMakeFiles/main.dir/src/main.cc.o: CMakeFiles/main.dir/flags.make
 CMakeFiles/main.dir/src/main.cc.o: /Users/elias/Documents/Studium/Semester\ 6/Bachelor\ Project/Bachelor-Project-Computer-Graphics/src/main.cc
 CMakeFiles/main.dir/src/main.cc.o: CMakeFiles/main.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/main.dir/src/main.cc.o"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/src/main.cc.o -MF CMakeFiles/main.dir/src/main.cc.o.d -o CMakeFiles/main.dir/src/main.cc.o -c "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/src/main.cc"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main.dir/src/main.cc.o -MF CMakeFiles/main.dir/src/main.cc.o.d -o CMakeFiles/main.dir/src/main.cc.o -c "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/src/main.cc"
 
 CMakeFiles/main.dir/src/main.cc.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/main.dir/src/main.cc.i"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/src/main.cc" > CMakeFiles/main.dir/src/main.cc.i
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/src/main.cc" > CMakeFiles/main.dir/src/main.cc.i
 
 CMakeFiles/main.dir/src/main.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/main.dir/src/main.cc.s"
-	/usr/bin/clang++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/src/main.cc" -o CMakeFiles/main.dir/src/main.cc.s
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/Users/elias/Documents/Studium/Semester 6/Bachelor Project/Bachelor-Project-Computer-Graphics/src/main.cc" -o CMakeFiles/main.dir/src/main.cc.s
 
 # Object files for target main
 main_OBJECTS = \
