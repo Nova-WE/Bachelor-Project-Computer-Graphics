@@ -10,7 +10,6 @@
 #include "triangleModel.h"
 
 int main() {
-
   hittableList world;
   
   auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
