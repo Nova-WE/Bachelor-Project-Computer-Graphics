@@ -3,16 +3,18 @@
 
 #include "hittable.h"
 
+#include <glm/vec3.hpp>
+
 class sphere : public hittable {
 public:
-  sphere(const point3 &center, double radius, shared_ptr<material> mat)
+  sphere(const glm::vec3 &center, double radius, shared_ptr<material> mat)
       : center(center), radius(std::fmax(0, radius)), mat(mat) {}
 
   bool hit(const ray &r, interval ray_t, hitRecord &rec) const override {
-    vec3 oc = center - r.origin();
-    auto a = r.direction().length_squared();
+    glm::vec3 oc = center - r.origin();
+    auto a = vec_length_squared(r.direction());
     auto h = dot(r.direction(), oc);
-    auto c = oc.length_squared() - radius * radius;
+    auto c = vec_length_squared(oc) - radius * radius;
     auto discriminant = h * h - a * c;
 
     if (discriminant < 0) {
@@ -32,7 +34,7 @@ public:
 
     rec.t = root;
     rec.p = r.at(rec.t);
-    vec3 outwardNormal = (rec.p - center) / radius;
+    glm::vec3 outwardNormal = (rec.p - center) / radius;
     rec.setFaceNormal(r, outwardNormal);
     rec.mat = mat;
 
@@ -40,8 +42,8 @@ public:
   }
 
 private:
-  point3 center;
-  double radius;
+  glm::vec3 center;
+  float radius;
   shared_ptr<material> mat;
 };
 

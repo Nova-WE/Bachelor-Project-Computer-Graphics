@@ -7,13 +7,13 @@ class material;
 
 class hitRecord {
 public:
-  point3 p;
-  vec3 normal;
+  glm::vec3 p;
+  glm::vec3 normal;
   shared_ptr<material> mat;
   double t;
   bool frontFace;
 
-  void setFaceNormal(const ray &r, const vec3 &outwardNormal) {
+  void setFaceNormal(const ray &r, const glm::vec3 &outwardNormal) {
     // The outwardNormal is assumend to be of unit length
 
     frontFace = dot(r.direction(), outwardNormal) < 0;

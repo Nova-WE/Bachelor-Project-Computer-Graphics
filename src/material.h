@@ -20,7 +20,7 @@ public:
   bool scatter(const ray &r_in, const hitRecord &rec, color &attenuation,
                ray &scattered) const override {
     auto scatterDirection = rec.normal + randomUnitVec();
-    if (scatterDirection.nearZero()) {
+    if (vecNearZero(scatterDirection)) {
       scatterDirection = rec.normal;
     }
 
@@ -40,8 +40,8 @@ public:
 
   bool scatter(const ray &r_in, const hitRecord &rec, color &attenuation,
                ray &scattered) const override {
-    auto reflection = unitVector(reflect(r_in.direction(), rec.normal)) +
-                      (fuzz * randomUnitVec());
+    auto reflection = glm::normalize(reflect(r_in.direction(), rec.normal)) +
+                      fuzz * randomUnitVec();
     scattered = ray(rec.p, reflection);
     attenuation = albedo;
     return dot(scattered.direction(), rec.normal) > 0;
@@ -49,7 +49,7 @@ public:
 
 private:
   color albedo;
-  double fuzz;
+  float fuzz;
 };
 
 class dielectric : public material {
@@ -60,12 +60,12 @@ class dielectric : public material {
                      ray &scattered) const override {
             attenuation = color(1.0, 1.0, 1.0);
             double ri = rec.frontFace ? (1.0 / refractiveIndex) : refractiveIndex;
-            vec3 unit_direction = unitVector(r_in.direction());
+            glm::vec3 unit_direction = glm::normalize(r_in.direction());
 
             double cos_theta = fmin(dot(-unit_direction, rec.normal), 1.0);
             double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
 
-            vec3 direction;
+            glm::vec3 direction;
             if ((ri * sin_theta > 1.0) || (reflectance(cos_theta, ri) > randomDouble())) {
                 // Must reflect
                 direction = reflect(unit_direction, rec.normal);

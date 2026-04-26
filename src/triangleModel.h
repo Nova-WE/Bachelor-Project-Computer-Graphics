@@ -4,26 +4,20 @@
 #include "../lib/tiny_obj_loader.h"
 
 #include "hittable.h"
-#include "vec3.h"
 
 class vertex {
 public:
-  vec3 position;
-  vec3 normal;
+  glm::vec3 position;
+  glm::vec3 normal;
   float uv[2];
 };
-
-std::ostream &operator<<(std::ostream &os, const vertex &vert) {
-  return os << "Vertex Position: (" << vert.position << ")" << "/ Normal: ("
-            << vert.normal << ")";
-}
 
 class triangle : public hittable {
 public:
   vertex vertices[3];
-  vec3 normal;
+  glm::vec3 normal;
 
-  triangle(vertex v0, vertex v1, vertex v2, vec3 normal, shared_ptr<material> mat)
+  triangle(vertex v0, vertex v1, vertex v2, glm::vec3 normal, shared_ptr<material> mat)
       : normal(normal), mat(mat) {
     vertices[0] = v0;
     vertices[1] = v1;
@@ -41,10 +35,10 @@ public:
     }
     constexpr double epsilon = std::numeric_limits<double>::epsilon();
 
-    vec3 e1 = vertices[1].position - vertices[0].position;
-    vec3 e2 = vertices[2].position - vertices[0].position;
+    glm::vec3 e1 = vertices[1].position - vertices[0].position;
+    glm::vec3 e2 = vertices[2].position - vertices[0].position;
 
-    vec3 rayCrossE2 = cross(r.direction(), e2);
+    glm::vec3 rayCrossE2 = cross(r.direction(), e2);
     double det = dot(e1, rayCrossE2);
 
     // ray is parallel to triangle plane
@@ -53,7 +47,7 @@ public:
     }
 
     double invDet = 1.0 / det;
-    vec3 s = r.origin() - vertices[0].position;
+    glm::vec3 s = r.origin() - vertices[0].position;
 
     double u = invDet * dot(s, rayCrossE2);
 
@@ -61,8 +55,8 @@ public:
     if (u < -epsilon || u > 1.0 + epsilon) {
       return false;
     }
-    vec3 sCrossE1 = cross(s, e1);
-    double v = invDet * dot(r.direction(), sCrossE1);
+    glm::vec3 sCrossE1 = cross(s, e1);
+    double v = invDet * glm::dot(r.direction(), sCrossE1);
 
     // ray passes outside of edge3
     if (v < -epsilon || u + v > 1.0 + epsilon) {
@@ -89,7 +83,7 @@ private:
 
 class triangleModel : public hittable{
 public:
-  triangleModel(const char *filename, shared_ptr<material> mat, point3 offset) {
+  triangleModel(const char *filename, shared_ptr<material> mat, glm::vec3 offset) {
     std::string warn, err;
     bool success = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
                                     filename, nullptr, true);
@@ -109,19 +103,19 @@ public:
 
         auto i_vert = 3 * index.vertex_index;
         vert.position =
-            vec3(attrib.vertices[i_vert], attrib.vertices[i_vert + 1],
+            glm::vec3(attrib.vertices[i_vert], attrib.vertices[i_vert + 1],
                  attrib.vertices[i_vert + 2]) + offset;
 
         if (index.normal_index >= 0) {
           auto i_norm = 3 * index.normal_index;
-          vert.normal = vec3(attrib.normals[i_norm], attrib.normals[i_norm + 1],
+          vert.normal = glm::vec3(attrib.normals[i_norm], attrib.normals[i_norm + 1],
                              attrib.normals[i_norm + 2]);
         }
         vertices.push_back(vert);
 
         if (counter == 0) {
           counter = 3;
-          vec3 normal = vertices[0].normal;
+          glm::vec3 normal = vertices[0].normal;
           triangle tri =
               triangle(vertices[0], vertices[1], vertices[2], normal, mat);
           triangles.push_back(tri);

@@ -11,19 +11,19 @@ class interval {
         interval() : min(+infinity), max(-infinity) {}
         interval(double min, double max) : min(min), max(max) {}
 
-        double size() {
+        [[nodiscard]] double size() const {
             return max - min;
         }
 
-        bool contains(double t) {
+        [[nodiscard]] bool contains(double t) const {
             return min <= t && t <= max;
         }
 
-        bool surrounds(double t) {
+        [[nodiscard]] bool surrounds(double t) const {
             return min < t && t < max;
         }
 
-        double clamp(double t) const {
+        [[nodiscard]] double clamp(double t) const {
             if (t < min) return min;
             if (t > max) return max;
             return t;

@@ -16,12 +16,12 @@ public:
   int maxDepth = 10;
 
   double vFov = 90.0;
-  point3 lookFrom = point3(0, 0, 0);
-  point3 lookAt = point3(0, 0, -1);
-  vec3 vUp = vec3(0, 1, 0);
+  glm::vec3 lookFrom = glm::vec3(0, 0, 0);
+  glm::vec3 lookAt = glm::vec3(0, 0, -1);
+  glm::vec3 vUp = glm::vec3(0, 1, 0);
 
   double defocusAngle = 0;
-  double focusDist = 10;
+  float focusDist = 10;
 
   void render(const hittable &world) {
     initialize();
@@ -49,14 +49,14 @@ public:
 
 private:
   int imageHeight;
-  double pixelSampleScale;
-  point3 center;
-  point3 pixel00pos;
-  vec3 pixelDelta_u;
-  vec3 pixelDelta_v;
-  vec3 u, v, w;
-  vec3 defocusDisk_u;
-  vec3 defocusDisk_v;
+  float pixelSampleScale;
+  glm::vec3 center;
+  glm::vec3 pixel00pos;
+  glm::vec3 pixelDelta_u;
+  glm::vec3 pixelDelta_v;
+  glm::vec3 u, v, w;
+  glm::vec3 defocusDisk_u;
+  glm::vec3 defocusDisk_v;
 
   void initialize() {
     imageHeight = int(imageWidth / aspectRatio);
@@ -68,37 +68,37 @@ private:
 
     double theta = degreesToRadians(vFov);
     double h = tan(theta / 2.0);
-    double viewportHeight = 2.0 * h * focusDist;
-    auto viewportWidth = viewportHeight * (double(imageWidth) / imageHeight);
+    float viewportHeight = 2.0f * h * focusDist;
+    float viewportWidth = viewportHeight * (double(imageWidth) / imageHeight);
 
-    w = unitVector(lookFrom - lookAt);
-    u = unitVector(cross(vUp, w));
+    w = glm::normalize(lookFrom - lookAt);
+    u = glm::normalize(cross(vUp, w));
     v = cross(w, u);
 
     // Calculate vector going along the viewport edged top->bottom, left->right
-    vec3 viewport_u = viewportWidth * u;
-    vec3 viewport_v = viewportHeight * -v;
+    glm::vec3 viewport_u = viewportWidth * u;
+    glm::vec3 viewport_v = viewportHeight * -v;
 
     // Calculate horizontal and vertical pixel delta
-    pixelDelta_u = viewport_u / imageWidth;
-    pixelDelta_v = viewport_v / imageHeight;
+    pixelDelta_u = viewport_u / (float)imageWidth;
+    pixelDelta_v = viewport_v / (float)imageHeight;
 
     // Calculate top-left Pixel position
-    vec3 viewportTopLeftCorner =
-        center - (focusDist * w) - viewport_u / 2 - viewport_v / 2;
-    pixel00pos = viewportTopLeftCorner + 0.5 * (pixelDelta_u + pixelDelta_v);
+    glm::vec3 viewportTopLeftCorner =
+        center - (focusDist * w) - viewport_u / 2.0f - viewport_v / 2.0f;
+    pixel00pos = viewportTopLeftCorner + 0.5f * (pixelDelta_u + pixelDelta_v);
 
     // Calculate the camera Defocus
-    auto defocusRadius = focusDist * tan(degreesToRadians(defocusAngle / 2));
+    float defocusRadius = focusDist * tan(degreesToRadians(defocusAngle / 2));
     defocusDisk_u = u * defocusRadius;
     defocusDisk_v = v * defocusRadius;
   }
 
   ray getRay(int i, int j) const {
-    vec3 offset = sampleSquare();
+    glm::vec3 offset = sampleSquare();
 
-    auto pixelSample = pixel00pos + ((i + offset.x()) * pixelDelta_u) +
-                       ((j + offset.y()) * pixelDelta_v);
+    auto pixelSample = pixel00pos + ((i + offset.x) * pixelDelta_u) +
+                       ((j + offset.y) * pixelDelta_v);
 
     auto rayOrigin = (defocusAngle <= 0) ? center : defocusDiskSample();
     auto rayDirection = pixelSample - rayOrigin;
@@ -106,11 +106,11 @@ private:
     return ray(rayOrigin, rayDirection);
   }
 
-  vec3 sampleSquare() const {
-    return vec3(randomDouble() - 0.5, randomDouble() - 0.5, 0);
+  glm::vec3 sampleSquare() const {
+    return glm::vec3(randomDouble() - 0.5, randomDouble() - 0.5, 0);
   }
 
-  point3 defocusDiskSample() const {
+  glm::vec3 defocusDiskSample() const {
       auto p = randomOnUnitDisk();
       return center + (p[0] * defocusDisk_u) + (p[1] * defocusDisk_v);
   }
@@ -130,8 +130,8 @@ private:
       return color(0, 0, 0);
     }
 
-    vec3 unitVec = unitVector(r.direction());
-    auto a = 0.5 * (unitVec.y() + 1.0);
+    glm::vec3 unitVec = glm::normalize(r.direction());
+    float a = 0.5 * (unitVec.y + 1.0);
     return (1 - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);
   }
 };

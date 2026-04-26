@@ -36,6 +36,64 @@ inline double randomDouble(double min, double max) {
 #include "color.h"
 #include "interval.h"
 #include "ray.h"
-//#include "vec3.h"
+#include <glm/glm.hpp>
+
+// vector utility functions
+inline bool vecNearZero(glm::vec3 v) {
+    auto s = 1e-8;
+    return (std::fabs(v.x) < s) && (std::fabs(v.y) < s) && (std::fabs(v.z) < s);
+}
+
+inline float vec_length_squared(glm::vec3 v) {
+    auto len = glm::length(v);
+    return len * len;
+}
+
+static glm::vec3 randomVector() {
+    return {randomDouble(), randomDouble(), randomDouble()};
+}
+
+static glm::vec3 randomVector(double min, double max) {
+    return {randomDouble(min, max), randomDouble(min, max),
+                randomDouble(min, max)};
+}
+
+inline glm::vec3 randomUnitVec() {
+    while (true) {
+        auto p = randomVector(-1, 1);
+        auto lensq = vec_length_squared(p);
+        if (1e-160 < lensq && lensq <= 1) {
+            return p / sqrtf(lensq);
+        }
+    }
+}
+
+inline glm::vec3 randomOnHemisphere(const glm::vec3& normal) {
+    glm::vec3 onUnitSphere = randomUnitVec();
+    if (dot(onUnitSphere, normal) < 0) {
+        return -onUnitSphere;
+    }
+    return onUnitSphere;
+}
+
+inline glm::vec3 randomOnUnitDisk() {
+    while (true) {
+        auto p = glm::vec3(randomDouble(-1, 1), randomDouble(-1, 1), 0);
+        if (vec_length_squared(p) < 1) {
+            return p;
+        }
+    }
+}
+
+inline glm::vec3 reflect(const glm::vec3 v, const glm::vec3 n) {
+    return v - 2 * glm::dot(v, n) * n;
+}
+
+inline glm::vec3 refract(const glm::vec3& uv, const glm::vec3& n, float etai_over_etat) {
+    float cos_theta = std::fmin(dot(-uv, n), 1.0);
+    glm::vec3 r_out_perp = etai_over_etat * (uv + cos_theta * n);
+    glm::vec3 r_out_parallel = -sqrtf(1.0f - vec_length_squared(r_out_perp)) * n;
+    return r_out_perp + r_out_parallel;
+}
 
 #endif // RTWEEKEND_H

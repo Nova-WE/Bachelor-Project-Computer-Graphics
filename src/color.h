@@ -1,19 +1,19 @@
 #if !defined(COLOR_H)
 #define COLOR_H
 
-#include "vec3.h"
+#include <glm/glm.hpp>
 #include "interval.h"
 
-using color = vec3;
+using color = glm::vec3;
 
-inline double linearToGamma(double linear_t) {
+inline double linearToGamma(const double linear_t) {
     return linear_t > 0 ? sqrt(linear_t) : 0;
 }
 
-void write_color(unsigned char* data, int index, const color& pixelColor) {
-    auto r = pixelColor.x();
-    auto g = pixelColor.y();
-    auto b = pixelColor.z();
+inline void write_color(unsigned char* data, const int index, const color& pixelColor) {
+    double r = pixelColor.x;
+    double g = pixelColor.y;
+    double b = pixelColor.z;
 
     r = linearToGamma(r);
     g = linearToGamma(g);
@@ -21,13 +21,10 @@ void write_color(unsigned char* data, int index, const color& pixelColor) {
 
     // Translate [0, 1] color range to [0, 255] for color output
     static const interval intensity(0.000, 0.999);
-    double rByte = int(256 * intensity.clamp(r));
-    double gByte = int(256 * intensity.clamp(g));
-    double bByte = int(256 * intensity.clamp(b));
 
-    data[index] = rByte;
-    data[index + 1] = gByte;
-    data[index + 2] = bByte;
+    data[index] = static_cast<int>(256 * intensity.clamp(r));;
+    data[index + 1] = static_cast<int>(256 * intensity.clamp(g));
+    data[index + 2] = static_cast<int>(256 * intensity.clamp(b));
 }
 
 #endif // COLOR_H
