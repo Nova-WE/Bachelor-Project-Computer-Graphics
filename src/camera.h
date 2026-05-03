@@ -5,7 +5,9 @@
 #include "../lib/stb_image_write.h"
 
 #include "hittable.h"
+#include "hittable_list.h"
 #include "material.h"
+#include "light.h"
 
 class camera {
 public:
@@ -23,7 +25,7 @@ public:
   double defocusAngle = 0;
   float focusDist = 10;
 
-  void render(const hittable &world) {
+  void render(const hittable &world, const std::vector<Light> &lights) {
     initialize();
 
     // Render final image
@@ -38,7 +40,7 @@ public:
         for (int sample = 0; sample < samplesPerPixel; sample++)
         {
           ray r = getRay(i, j);
-          pixelColor += rayColor(r, maxDepth, world);
+          pixelColor += rayColor(r, maxDepth, world, lights);
         }
         write_color(data, index, pixelColor * pixelSampleScale);
       }
@@ -115,19 +117,28 @@ private:
       return center + (p[0] * defocusDisk_u) + (p[1] * defocusDisk_v);
   }
 
-  color rayColor(const ray &r, const int depth, const hittable &world) {
+  color rayColor(const ray &r, const int depth, const hittable &world, const std::vector<Light> &lights) {
     if (depth <= 0) {
       return color(0, 0, 0);
     }
 
     hitRecord rec;
     if (world.hit(r, interval(0.001, infinity), rec)) {
-      ray scattered;
-      color attenuation;
-      if (rec.mat->scatter(r, rec, attenuation, scattered)) {
-        return attenuation * rayColor(scattered, depth - 1, world);
+      auto lighting = color(0, 0, 0);
+      for (const auto &light : lights) {
+        auto lightRay = ray(rec.p, light.getPosition() - rec.p);
+
+        hitRecord shadowRec;
+        if (world.hit(lightRay, interval(0.001, infinity), shadowRec)) {
+          continue; // skip if point in shadow
+        }
+        ray scattered;
+        color attenuation;
+        if (rec.mat->scatter(r, rec, attenuation, scattered, light)) {
+          lighting += attenuation;
+        }
       }
-      return color(0, 0, 0);
+      return lighting / (float)lights.size();
     }
 
     glm::vec3 unitVec = glm::normalize(r.direction());
