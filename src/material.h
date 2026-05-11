@@ -3,6 +3,7 @@
 
 #include "hittable.h"
 #include "light.h"
+#include "tinyObjLoaderImpl.h"
 
 class material {
 public:
@@ -14,6 +15,55 @@ public:
     }
 };
 
+class phong : public material {
+public:
+    phong(const tinyobj::material_t &mat, glm::vec3 &cameraPosition)
+        : cameraPosition(cameraPosition) {
+        // read ambient component, but discard for now
+        auto ambient_R = mat.ambient[0];
+        auto ambient_G = mat.ambient[1];
+        auto ambient_B = mat.ambient[2];
+        ambientColor = color(ambient_R, ambient_G, ambient_B) * 0.0f;
+
+        auto diffuse_R = mat.diffuse[0];
+        auto diffuse_G = mat.diffuse[1];
+        auto diffuse_B = mat.diffuse[2];
+        diffuseColor = color(diffuse_R, diffuse_G, diffuse_B);
+
+        auto specular_R = mat.specular[0];
+        auto specular_G = mat.specular[1];
+        auto specular_B = mat.specular[2];
+        specularColor = color(specular_R, specular_G, specular_B);
+
+        specularSize = mat.shininess;
+    }
+
+    bool scatter(const ray &r_in, const hitRecord &rec, color &attenuation, ray &scattered,
+                 const Light light) const override {
+        const auto lightDirection = glm::normalize(light.getPosition() - rec.p);
+        const auto lightStrength = light.getEmissionStrength();
+        scattered = ray(rec.p, glm::reflect(-lightDirection, rec.normal));
+        const auto diffuseComp = glm::max(0.0f, glm::dot(rec.normal, lightDirection)) * diffuseColor;
+        const auto specularComp = specular(scattered.direction(), glm::normalize(cameraPosition - rec.p)) *
+                                  specularColor;
+        attenuation = ambientColor + (diffuseComp + specularComp) * light.getEmissionColor() * lightStrength;
+        return true;
+    }
+
+private:
+    glm::vec3 &cameraPosition;
+    color ambientColor;
+    color diffuseColor;
+    color specularColor;
+    float specularSize;
+
+    [[nodiscard]] float specular(glm::vec3 r, const glm::vec3 viewDirection) const {
+        float spec = glm::max(0.0f, glm::dot(r, viewDirection));
+        return glm::pow(spec, specularSize);
+    }
+};
+
+/*
 class lambertian : public material {
 public:
     lambertian(const color &albedo) : albedo(albedo) {
@@ -92,40 +142,5 @@ private:
         return r0 + (1 - r0) * pow((1 - cosine), 5);
     }
 };
-
-class phong : public material {
-public:
-    phong(const color &albedo, float ambient, float ambientStrength, float diffuseStrength, float specularStrength,
-          float specularSize, glm::vec3 cameraPosition)
-        : albedo(albedo), ambient(ambient), ambientStrength(ambientStrength), diffuseStrength(diffuseStrength),
-          specularStrength(specularStrength), specularSize(specularSize), cameraPosition(cameraPosition) {
-    }
-
-    bool scatter(const ray &r_in, const hitRecord &rec, color &attenuation, ray &scattered,
-                 Light light) const override {
-        float ambientComp = ambient * ambientStrength;
-        auto lightDirection = glm::normalize(light.getPosition() - rec.p);
-        auto diffuseComp = glm::max(0.0f, glm::dot(rec.normal, lightDirection)) * diffuseStrength * light.getEmissionStrength();
-        auto specularComp = specular(rec.normal, lightDirection, glm::normalize(cameraPosition - rec.p)) * specularStrength * light.
-                getEmissionStrength();
-        attenuation = (ambientComp + diffuseComp + specularComp) * albedo * light.getEmissionColor();
-        return true;
-    }
-
-private:
-    color albedo;
-    glm::vec3 cameraPosition;
-    float ambient;
-    float ambientStrength;
-    float diffuseStrength;
-    float specularStrength;
-    float specularSize;
-
-    [[nodiscard]] float specular(const glm::vec3 normal, const glm::vec3 lightDirection,
-                                 const glm::vec3 viewDirection) const {
-        const auto r = glm::normalize((2 * glm::dot(lightDirection, normal) * normal) - lightDirection);
-        return glm::max(0.0f, glm::pow(glm::dot(r, viewDirection), specularSize));
-    }
-};
-
+*/
 #endif // MATERIAL_H

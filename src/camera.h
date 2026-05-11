@@ -99,8 +99,7 @@ private:
   ray getRay(int i, int j) const {
     glm::vec3 offset = sampleSquare();
 
-    auto pixelSample = pixel00pos + ((i + offset.x) * pixelDelta_u) +
-                       ((j + offset.y) * pixelDelta_v);
+    auto pixelSample = pixel00pos + ((float)i * pixelDelta_u) + ((float)j * pixelDelta_v);
 
     auto rayOrigin = (defocusAngle <= 0) ? center : defocusDiskSample();
     auto rayDirection = pixelSample - rayOrigin;
@@ -146,5 +145,6 @@ private:
     return (1 - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);
   }
 };
+
 
 #endif // CAMERA_H

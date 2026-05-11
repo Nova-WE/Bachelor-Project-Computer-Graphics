@@ -1,9 +1,9 @@
 #if !defined(TRIANGLEMODEL_H)
 #define TRIANGLEMODEL_H
 
-#include "../lib/tiny_obj_loader.h"
-
+#include "material.h"
 #include "hittable.h"
+#include "tinyObjLoaderImpl.h"
 
 class vertex {
 public:
@@ -83,16 +83,15 @@ private:
 
 class triangleModel : public hittable{
 public:
-  triangleModel(const char *filename, shared_ptr<material> mat, glm::vec3 offset) {
+  triangleModel(const char *filename, glm::vec3 offset, glm::vec3 &cameraPosition) {
     std::string warn, err;
     bool success = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
-                                    filename, nullptr, true);
+                                    filename, "../models", true);
 
     if (!success) {
       std::cout << err << std::endl;
       return;
     }
-
     for (const auto &shape : shapes) {
       int counter = 3;
       std::vector<vertex> vertices;
@@ -116,15 +115,21 @@ public:
         if (counter == 0) {
           counter = 3;
           glm::vec3 normal = vertices[0].normal;
+
+          auto mat = make_shared<phong>(materials[shape.mesh.material_ids[0]], cameraPosition);
+
           triangle tri =
               triangle(vertices[0], vertices[1], vertices[2], normal, mat);
           triangles.push_back(tri);
           vertices.clear();
         }
+
       }
     }
-    std::cout << "Loaded " << triangles.size() << " triangles from " << filename
-              << std::endl;
+    std::cout << "Loading OBJ: " << filename << "\n";
+    if (!warn.empty()) std::cout << "tinyobj warn: " << warn << "\n";
+    if (!err.empty())  std::cout << "tinyobj err: " << err << "\n";
+    std::cout << "Loaded triangles: " << triangles.size() << "\n";
   }
   bool hit(const ray &r, const interval ray_t, hitRecord &rec) const override {
     hitRecord tempRec;

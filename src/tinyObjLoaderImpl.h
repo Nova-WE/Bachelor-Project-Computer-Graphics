@@ -1,0 +1,11 @@
+//
+// Created by eliasw on 05.05.26.
+//
+
+#ifndef BACHELORPROJECT_TINYOBJLOADERIMPL_H
+#define BACHELORPROJECT_TINYOBJLOADERIMPL_H
+
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "../lib/tiny_obj_loader.h"
+
+#endif //BACHELORPROJECT_TINYOBJLOADERIMPL_H
