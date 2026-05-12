@@ -1,6 +1,8 @@
 #if !defined(TRIANGLEMODEL_H)
 #define TRIANGLEMODEL_H
 
+#include <utility>
+
 #include "material.h"
 #include "hittable.h"
 #include "tinyObjLoaderImpl.h"
@@ -14,14 +16,17 @@ public:
 
 class triangle : public hittable {
 public:
-  vertex vertices[3];
+  vertex vertices[3]{};
   glm::vec3 normal;
+  glm::vec3 center{};
 
   triangle(vertex v0, vertex v1, vertex v2, glm::vec3 normal, shared_ptr<material> mat)
-      : normal(normal), mat(mat) {
+      : normal(normal), mat(std::move(mat)) {
     vertices[0] = v0;
     vertices[1] = v1;
     vertices[2] = v2;
+
+    center = (v0.position + v1.position + v2.position) / 3.0f;
   }
 
   bool hit(const ray &r, interval ray_t, hitRecord &rec) const override {
@@ -144,6 +149,10 @@ public:
         }
     }
     return hitAnything;
+  }
+
+  [[nodiscard]] std::vector<triangle> getTriangles() const {
+    return triangles;
   }
 
 private:

@@ -96,4 +96,8 @@ inline glm::vec3 refract(const glm::vec3& uv, const glm::vec3& n, float etai_ove
     return r_out_perp + r_out_parallel;
 }
 
+inline std::ostream& operator<<(std::ostream& out, const glm::vec3& v) {
+    return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+}
+
 #endif // RTWEEKEND_H
