@@ -7,33 +7,34 @@
 #include <vector>
 
 class hittableList : public hittable {
-    public:
-        std::vector<std::shared_ptr<hittable>> objects;
+public:
+    std::vector<std::shared_ptr<hittable> > objects;
 
-        hittableList() = default;
-        hittableList(shared_ptr<hittable> object) { add(object); }
+    hittableList() = default;
 
-        void clear() { objects.clear(); }
+    hittableList(shared_ptr<hittable> object) { add(object); }
 
-        void add(shared_ptr<hittable> object) {
-            objects.push_back(object);
-        }
+    void clear() { objects.clear(); }
 
-        bool hit(const ray &r, interval ray_t, hitRecord &rec) const override {
-            hitRecord tmpRecord;
-            bool hit_anything = false;
-            double closest_so_far = ray_t.max;
+    void add(shared_ptr<hittable> object) {
+        objects.push_back(object);
+    }
 
-            for (const auto& object : objects) {
-                if (object->hit(r, interval(ray_t.min, closest_so_far), tmpRecord)) {
-                    hit_anything = true;
-                    closest_so_far = tmpRecord.t;
-                    rec = tmpRecord;
-                }
+    bool hit(const ray &r, interval ray_t, hitRecord &rec) const override {
+        hitRecord tmpRecord;
+        bool hit_anything = false;
+        double closest_so_far = ray_t.max;
+
+        for (const auto &object: objects) {
+            if (object->hit(r, interval(ray_t.min, closest_so_far), tmpRecord)) {
+                hit_anything = true;
+                closest_so_far = tmpRecord.t;
+                rec = tmpRecord;
             }
-
-            return hit_anything;
         }
+
+        return hit_anything;
+    }
 };
 
 #endif // HITTABLE_LIST_H

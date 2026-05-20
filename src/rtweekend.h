@@ -14,12 +14,12 @@ using std::shared_ptr;
 
 // Useful Constants
 
-const double infinity = std::numeric_limits<double>::infinity();
-const double pi = 3.1415926535897932385;
+constexpr float infinity = std::numeric_limits<float>::infinity();
+constexpr float pi = 3.1415926535897932385;
 
 // utility functions
 
-inline double degreesToRadians(double degrees) {
+inline float degreesToRadians(const float degrees) {
     return degrees * pi / 180.0;
 }
 
@@ -27,7 +27,7 @@ inline double randomDouble() {
     return std::rand() / (RAND_MAX + 1.0);
 }
 
-inline double randomDouble(double min, double max) {
+inline double randomDouble(const double min, const double max) {
     return min + (max - min) * randomDouble();
 }
 
@@ -53,9 +53,11 @@ static glm::vec3 randomVector() {
     return {randomDouble(), randomDouble(), randomDouble()};
 }
 
-static glm::vec3 randomVector(double min, double max) {
-    return {randomDouble(min, max), randomDouble(min, max),
-                randomDouble(min, max)};
+static glm::vec3 randomVector(const double min, const double max) {
+    return {
+        randomDouble(min, max), randomDouble(min, max),
+        randomDouble(min, max)
+    };
 }
 
 inline glm::vec3 randomUnitVec() {
@@ -68,7 +70,7 @@ inline glm::vec3 randomUnitVec() {
     }
 }
 
-inline glm::vec3 randomOnHemisphere(const glm::vec3& normal) {
+inline glm::vec3 randomOnHemisphere(const glm::vec3 &normal) {
     glm::vec3 onUnitSphere = randomUnitVec();
     if (dot(onUnitSphere, normal) < 0) {
         return -onUnitSphere;
@@ -89,14 +91,14 @@ inline glm::vec3 reflect(const glm::vec3 v, const glm::vec3 n) {
     return v - 2 * glm::dot(v, n) * n;
 }
 
-inline glm::vec3 refract(const glm::vec3& uv, const glm::vec3& n, float etai_over_etat) {
+inline glm::vec3 refract(const glm::vec3 &uv, const glm::vec3 &n, float etai_over_etat) {
     float cos_theta = std::fmin(dot(-uv, n), 1.0);
     glm::vec3 r_out_perp = etai_over_etat * (uv + cos_theta * n);
     glm::vec3 r_out_parallel = -sqrtf(1.0f - vec_length_squared(r_out_perp)) * n;
     return r_out_perp + r_out_parallel;
 }
 
-inline std::ostream& operator<<(std::ostream& out, const glm::vec3& v) {
+inline std::ostream &operator<<(std::ostream &out, const glm::vec3 &v) {
     return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
 }
 

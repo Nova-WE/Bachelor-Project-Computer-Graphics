@@ -7,18 +7,12 @@
 
 class Light {
 public:
-    Light() {
-        position = glm::vec3(0.0f, 0.0f, 0.0f);
-        emission_color = glm::vec3(0.0f, 0.0f, 0.0f);
-        emission_strength = 0.0f;
+    Light() : position(glm::vec3(0.0f)), emission_color(glm::vec3(1.0f)), emission_strength(0.0) {
     }
 
-    Light(glm::vec3 pos, glm::vec3 em_c, float em_s) {
-        position = pos;
-        emission_color = em_c;
-        emission_strength = em_s;
+    Light(const glm::vec3 pos, const glm::vec3 em_c, const float em_s) : position(pos), emission_color(em_c),
+                                                                         emission_strength(em_s) {
     }
-
 
     [[nodiscard]] glm::vec3 getPosition() const { return position; }
 

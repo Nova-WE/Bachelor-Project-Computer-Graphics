@@ -68,10 +68,10 @@ private:
 
     pixelSampleScale = 1.0 / samplesPerPixel;
 
-    double theta = degreesToRadians(vFov);
-    double h = tan(theta / 2.0);
-    float viewportHeight = 2.0f * h * focusDist;
-    float viewportWidth = viewportHeight * (double(imageWidth) / imageHeight);
+    const float theta = degreesToRadians(vFov);
+    const float h = tan(theta / 2.0);
+    const float viewportHeight = 2.0f * h * focusDist;
+    const float viewportWidth = viewportHeight * (static_cast<double>(imageWidth) / imageHeight);
 
     w = glm::normalize(lookFrom - lookAt);
     u = glm::normalize(cross(vUp, w));
@@ -82,47 +82,46 @@ private:
     glm::vec3 viewport_v = viewportHeight * -v;
 
     // Calculate horizontal and vertical pixel delta
-    pixelDelta_u = viewport_u / (float)imageWidth;
-    pixelDelta_v = viewport_v / (float)imageHeight;
+    pixelDelta_u = viewport_u / static_cast<float>(imageWidth);
+    pixelDelta_v = viewport_v / static_cast<float>(imageHeight);
 
     // Calculate top-left Pixel position
-    glm::vec3 viewportTopLeftCorner =
+    const glm::vec3 viewportTopLeftCorner =
         center - (focusDist * w) - viewport_u / 2.0f - viewport_v / 2.0f;
     pixel00pos = viewportTopLeftCorner + 0.5f * (pixelDelta_u + pixelDelta_v);
 
     // Calculate the camera Defocus
-    float defocusRadius = focusDist * tan(degreesToRadians(defocusAngle / 2));
+    const float defocusRadius = focusDist * tan(degreesToRadians(defocusAngle / 2));
     defocusDisk_u = u * defocusRadius;
     defocusDisk_v = v * defocusRadius;
   }
 
-  ray getRay(int i, int j) const {
-    glm::vec3 offset = sampleSquare();
+  [[nodiscard]] ray getRay(int i, int j) const {
+    //glm::vec3 offset = sampleSquare();
 
-    auto pixelSample = pixel00pos + ((float)i * pixelDelta_u) + ((float)j * pixelDelta_v);
+    auto pixelSample = pixel00pos + static_cast<float>(i) * pixelDelta_u + static_cast<float>(j) * pixelDelta_v;
 
-    auto rayOrigin = (defocusAngle <= 0) ? center : defocusDiskSample();
-    auto rayDirection = pixelSample - rayOrigin;
+    const auto rayOrigin = (defocusAngle <= 0) ? center : defocusDiskSample();
+    const auto rayDirection = pixelSample - rayOrigin;
 
-    return ray(rayOrigin, rayDirection);
+    return {rayOrigin, rayDirection};
   }
 
-  glm::vec3 sampleSquare() const {
-    return glm::vec3(randomDouble() - 0.5, randomDouble() - 0.5, 0);
+  static glm::vec3 sampleSquare() {
+    return {randomDouble() - 0.5, randomDouble() - 0.5, 0};
   }
 
-  glm::vec3 defocusDiskSample() const {
+  [[nodiscard]] glm::vec3 defocusDiskSample() const {
       auto p = randomOnUnitDisk();
       return center + (p[0] * defocusDisk_u) + (p[1] * defocusDisk_v);
   }
 
-  color rayColor(const ray &r, const int depth, const hittable &world, const std::vector<Light> &lights) {
+  static color rayColor(const ray &r, const int depth, const hittable &world, const std::vector<Light> &lights) {
     if (depth <= 0) {
-      return color(0, 0, 0);
+      return {0, 0, 0};
     }
 
-    hitRecord rec;
-    if (world.hit(r, interval(0.001, infinity), rec)) {
+    if (hitRecord rec; world.hit(r, interval(0.001, infinity), rec)) {
       auto lighting = color(0, 0, 0);
       for (const auto &light : lights) {
         auto lightRay = ray(rec.p, light.getPosition() - rec.p);
@@ -132,12 +131,11 @@ private:
           continue; // skip if point in shadow
         }
         ray scattered;
-        color attenuation;
-        if (rec.mat->scatter(r, rec, attenuation, scattered, light)) {
+        if (color attenuation; rec.mat->scatter(r, rec, attenuation, scattered, light)) {
           lighting += attenuation;
         }
       }
-      return lighting / (float)lights.size();
+      return lighting / static_cast<float>(lights.size());
     }
 
     glm::vec3 unitVec = glm::normalize(r.direction());

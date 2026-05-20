@@ -10,7 +10,7 @@ inline double linearToGamma(const double linear_t) {
     return linear_t > 0 ? sqrt(linear_t) : 0;
 }
 
-inline void write_color(unsigned char* data, const int index, const color& pixelColor) {
+inline void write_color(unsigned char *data, const int index, const color &pixelColor) {
     double r = pixelColor.x;
     double g = pixelColor.y;
     double b = pixelColor.z;
