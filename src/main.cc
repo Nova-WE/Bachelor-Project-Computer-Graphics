@@ -12,6 +12,7 @@
 #include <fstream>
 #include <ranges>
 #include <filesystem>
+#include <functional>
 
 template <typename Func, typename... Args>
 auto timeFunction(Func&& func, Args&&... args) {
@@ -153,8 +154,8 @@ int main() {
     camera cam;
 
     cam.aspectRatio = 16.0 / 9.0;
-    cam.imageWidth = 1000;
-    cam.samplesPerPixel = 1;
+    cam.imageWidth = 1920;
+    cam.samplesPerPixel = 5;
     cam.maxDepth = 20;
 
     cam.vFov = 23;
@@ -168,7 +169,7 @@ int main() {
 
     std::ofstream timingLog("../logs/timing.txt");
 
-    auto modelPath = "../models/dragon.obj";
+    auto modelPath = "../models/occlusion.obj";
     auto outputImagePath = "../images/" + std::filesystem::path(modelPath).stem().string();
     auto outputHeatmapPath = "../heatmaps/" + std::filesystem::path(modelPath).stem().string();
 
