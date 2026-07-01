@@ -43,3 +43,5 @@ CMakeCache.txt
 
 models/
 scenes/
+images/
+heatmaps/
