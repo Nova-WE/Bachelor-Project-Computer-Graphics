@@ -12,7 +12,7 @@ enum axis {
     X, Y, Z
 };
 
-class boundingVolume : public hittable {
+class boundingVolume {
 public:
     glm::vec3 minPoint{}, maxPoint{};
     int start = 0;
@@ -26,16 +26,14 @@ public:
         maxPoint = glm::vec3(-1) * std::numeric_limits<float>::infinity();
     }
 
-    bool hit(const ray &r, interval ray_t, hitRecord &rec) const override {
+    bool hit(const ray &r, const interval ray_t, hitRecord &rec, float& hitDistance) const {
         // AABB hit detection using slab test
         auto close = -std::numeric_limits<float>::infinity();
         auto far = std::numeric_limits<float>::infinity();
         for (int i = 0; i < 3; i++) {
             const float rayDir = r.direction()[i];
             if (std::abs(rayDir) < 1e-6f) {
-                if (r.origin()[i] < minPoint[i] || r.origin()[i] > maxPoint[i]) {
-                    return false;
-                }
+                if (r.origin()[i] < minPoint[i] || r.origin()[i] > maxPoint[i]) return false;
                 continue;
             }
 
@@ -46,7 +44,12 @@ public:
             close = glm::max(close, t_close_i);
             far = glm::min(far, t_far_i);
         }
-        return close <= far;
+        if (far < ray_t.min || close > ray_t.max) return false;
+        if (close <= far) {
+            hitDistance = close;
+            return true;
+        }
+        return false;
     }
 
     void expandToInclude(const vertex &vert) {

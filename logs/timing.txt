@@ -1,0 +1,7 @@
+Timing Log of: ../models/dragon.obj
+ 
+SAH: Leaves=41965 Internals=41964 MaxDepth=16 LeafSizes=[2, 228]
+SAH build time: 6398 ms
+SAH render time: 944 ms
+Total time: 7342 ms
+

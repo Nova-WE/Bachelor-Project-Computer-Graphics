@@ -12,3 +12,5 @@ target_sources(main
         src/main.cc
 )
 
+find_package(OpenMP REQUIRED)
+target_link_libraries(main PRIVATE OpenMP::OpenMP_CXX)

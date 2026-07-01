@@ -1,10 +1,11 @@
-#if !defined(TRIANGLEMODEL_H)
+#ifndef TRIANGLEMODEL_H
 #define TRIANGLEMODEL_H
 
+#include <bitset>
 #include <utility>
-
 #include "material.h"
 #include "hittable.h"
+#include "mortonCode.h"
 #include "tinyObjLoaderImpl.h"
 
 struct vertex {
@@ -16,10 +17,26 @@ struct vertex {
 class triangle : public hittable {
 public:
     vertex vertices[3]{};
-    glm::vec3 normal;
+    glm::vec3 normal{};
     glm::vec3 center{};
     glm::vec3 Min{};
     glm::vec3 Max{};
+    glm::u64 mortonCode{};
+
+    shared_ptr<material> mat;
+
+    triangle() {
+        vertices[0] = vertex{};
+        vertices[1] = vertex{};
+        vertices[2] = vertex{};
+
+        Min = glm::min(glm::min(vertices[0].position, vertices[1].position), vertices[2].position);
+        Max = glm::max(glm::max(vertices[0].position, vertices[1].position), vertices[2].position);
+
+        center = (vertices[0].position + vertices[1].position + vertices[2].position) / 3.0f;
+
+        mortonCode = 0;
+    }
 
     triangle(vertex v0, vertex v1, vertex v2, glm::vec3 normal, shared_ptr<material> mat)
         : normal(normal), mat(std::move(mat)) {
@@ -85,14 +102,18 @@ public:
             return false;
         }
     }
-
-private:
-    shared_ptr<material> mat;
 };
 
 class triangleModel : public hittable {
 public:
-    triangleModel(const char *filename, glm::vec3 &cameraPosition) {
+    glm::vec3 Min;
+    glm::vec3 Max;
+    MortonCode codeGenerator;
+
+    triangleModel(const char *filename, glm::vec3 &cameraPosition) : codeGenerator(Min, Max) {
+        Min = glm::vec3(std::numeric_limits<float>::max());
+        Max = glm::vec3(-std::numeric_limits<float>::max());
+
         std::string warn, err;
         bool success = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
                                         filename, "../models", true);
@@ -127,17 +148,27 @@ public:
 
                     auto mat = make_shared<phong>(materials[shape.mesh.material_ids[0]], cameraPosition);
 
-                    triangle tri =
-                            triangle(vertices[0], vertices[1], vertices[2], normal, mat);
-                    triangles.push_back(tri);
+                    auto tri = triangle(vertices[0], vertices[1], vertices[2], normal, mat);
+
+                    if (tri.mat->isEmissive) {
+                        lights.push_back(tri);
+                    } else {
+                        Min = glm::min(Min, tri.Min);
+                        Max = glm::max(Max, tri.Max);
+                        triangles.push_back(tri);
+                    }
                     vertices.clear();
                 }
             }
         }
+        codeGenerator = MortonCode(Min, Max);
+        calculateGridIndices();
+
         std::cout << "Loading OBJ: " << filename << "\n";
         if (!warn.empty()) std::cout << "tinyobj warn: " << warn << "\n";
         if (!err.empty()) std::cout << "tinyobj err: " << err << "\n";
         std::cout << "Loaded triangles: " << triangles.size() << "\n";
+        std::cout << "Loaded lights: " << lights.size() << "\n";
     }
 
     bool hit(const ray &r, const interval ray_t, hitRecord &rec) const override {
@@ -155,12 +186,24 @@ public:
         return hitAnything;
     }
 
-    [[nodiscard]] std::vector<triangle> getTriangles() const {
+    void calculateGridIndices() {
+        for (auto &tri: triangles) {
+            tri.mortonCode = codeGenerator.encode(tri.center);
+            //std::cout << std::bitset<64>(tri.mortonCode) << std::endl;
+        }
+    }
+
+    [[nodiscard]] const std::vector<triangle>& getTriangles() const {
         return triangles;
+    }
+
+    [[nodiscard]] const std::vector<triangle>& getLights() const {
+        return lights;
     }
 
 private:
     std::vector<triangle> triangles;
+    std::vector<triangle> lights;
 
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;

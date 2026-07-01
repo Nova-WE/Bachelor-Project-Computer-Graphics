@@ -1,64 +1,68 @@
-#if !defined(MATERIAL_H)
+#ifndef MATERIAL_H
 #define MATERIAL_H
 
 #include "hittable.h"
-#include "light.h"
 #include "tinyObjLoaderImpl.h"
+#include "rtweekend.h"
 
 class material {
 public:
     virtual ~material() = default;
+    bool isEmissive = false;
 
     virtual bool scatter(const ray &r_in, const hitRecord &rec,
-                         color &attenuation, ray &scattered, Light light) const {
+                         color &attenuation, ray &scattered, const color lightColor, const glm::vec3 lightCenter) const {
         return false;
     }
+
+    virtual color getEmissionColor() = 0;
 };
 
 class phong : public material {
 public:
+
     phong(const tinyobj::material_t &mat, glm::vec3 &cameraPosition)
         : cameraPosition(cameraPosition) {
         // read ambient component, but discard for now
-        auto ambient_R = mat.ambient[0];
-        auto ambient_G = mat.ambient[1];
-        auto ambient_B = mat.ambient[2];
-        ambientColor = color(ambient_R, ambient_G, ambient_B) * 0.0f;
 
-        auto diffuse_R = mat.diffuse[0];
-        auto diffuse_G = mat.diffuse[1];
-        auto diffuse_B = mat.diffuse[2];
-        diffuseColor = color(diffuse_R, diffuse_G, diffuse_B);
-
-        auto specular_R = mat.specular[0];
-        auto specular_G = mat.specular[1];
-        auto specular_B = mat.specular[2];
-        specularColor = color(specular_R, specular_G, specular_B);
-
+        ambientColor = color(mat.ambient[0], mat.ambient[1], mat.ambient[2]) * 0.0f;
+        diffuseColor = color(mat.diffuse[0], mat.diffuse[1], mat.diffuse[2]);
+        specularColor = color(mat.specular[0], mat.specular[1], mat.specular[2]);
         specularSize = mat.shininess;
+
+        emissionColor = color(mat.emission[0], mat.emission[1], mat.emission[2]);
+        isEmissive = emissionColor != color(0.0f);
     }
 
     bool scatter(const ray &r_in, const hitRecord &rec, color &attenuation, ray &scattered,
-                 const Light light) const override {
-        const auto lightDirection = glm::normalize(light.getPosition() - rec.p);
-        const auto lightStrength = light.getEmissionStrength();
+                 const color lightColor, const glm::vec3 lightCenter) const override {
+        // don't scatter of light source triangles
+        if (isEmissive) return true;
+
+        const auto lightDirection = glm::normalize(lightCenter - rec.p);
+
         scattered = ray(rec.p, glm::reflect(-lightDirection, rec.normal));
-        const auto diffuseComp = glm::max(0.0f, glm::dot(rec.normal, lightDirection)) * diffuseColor;
+        const auto diffuseComp = diffuseColor;
         const auto specularComp = specular(scattered.direction(), glm::normalize(cameraPosition - rec.p)) *
                                   specularColor;
-        attenuation = ambientColor + (diffuseComp + specularComp) * light.getEmissionColor() * lightStrength;
+        attenuation = ambientColor + (diffuseComp + specularComp) * lightColor;
         return true;
+    }
+
+    [[nodiscard]] color getEmissionColor() override {
+        return emissionColor;
     }
 
 private:
     glm::vec3 &cameraPosition;
-    color ambientColor;
-    color diffuseColor;
-    color specularColor;
+    color ambientColor{};
+    color diffuseColor{};
+    color specularColor{};
     float specularSize;
+    color emissionColor{};
 
-    [[nodiscard]] float specular(glm::vec3 r, const glm::vec3 viewDirection) const {
-        float spec = glm::max(0.0f, glm::dot(r, viewDirection));
+    [[nodiscard]] float specular(const glm::vec3 r, const glm::vec3 viewDirection) const {
+        const float spec = glm::max(0.0f, glm::dot(r, viewDirection));
         return glm::pow(spec, specularSize);
     }
 };

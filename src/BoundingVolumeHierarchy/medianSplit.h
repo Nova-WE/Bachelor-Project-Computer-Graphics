@@ -41,6 +41,8 @@ public:
         const int leftIndex = getLeftChildIndex(parentIndex);
         const int rightIndex = getRightChildIndex(parentIndex);
 
+        if (leftIndex >= boxes.size() || rightIndex >= boxes.size()) return;
+
         buildBoundingVolume(leftIndex, box->start, mid);
         buildBoundingVolume(rightIndex, box->start + mid, box->count - mid);
 

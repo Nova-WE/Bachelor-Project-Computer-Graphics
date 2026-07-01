@@ -20,10 +20,9 @@ struct Split {
 
 class SAH : public BVH {
 public:
-    int numberOfSplits = 16;
+    int numberOfBuckets = 16;
 
-    explicit SAH(const std::vector<triangle> &triangles) : BVH(triangles) {
-    }
+    explicit SAH(const std::vector<triangle> &triangles) : BVH(triangles) {}
 
     void buildBoundingVolume(const int boxIndex, const int start, const int count) override {
         boundingVolume &box = boxes[boxIndex];
@@ -39,11 +38,12 @@ public:
         // return if max split depth reached
         if (depth <= 0) return;
 
+        //numberOfBuckets = glm::max(2, 1 << static_cast<int>(glm::ceil(depth / 5)));
+
         const auto box = &boxes[parentIndex];
         // return if there are less than the minimum number of triangles are in the box
         if (box->count < minTriangles) return;
 
-        constexpr int nSplits = 16;
         const auto [cost, position, ax] = chooseSplit(*box);
         // return if splitting would increase the cost
         if (cost >= box->boxCost) return;
@@ -59,6 +59,8 @@ public:
 
         const int leftIndex = getLeftChildIndex(parentIndex);
         const int rightIndex = getRightChildIndex(parentIndex);
+
+        if (leftIndex >= boxes.size() || rightIndex >= boxes.size()) return;
 
         buildBoundingVolume(leftIndex, box->start, mid);
         buildBoundingVolume(rightIndex, box->start + mid, box->count - mid);
@@ -77,8 +79,8 @@ private:
 
         if (range < 1e-6f) return 0;
 
-        const int b = static_cast<int>((center - minVal) / range * static_cast<float>(numberOfSplits));
-        return std::clamp(b, 0, numberOfSplits - 1);
+        const int b = static_cast<int>((center - minVal) / range * static_cast<float>(numberOfBuckets));
+        return std::clamp(b, 0, numberOfBuckets - 1);
     }
 
     [[nodiscard]] Split chooseSplit(const boundingVolume &box) const {
@@ -89,7 +91,7 @@ private:
         boundingVolume bestLeftBox{}, bestRightBox{};
 
         for (int dim = 0; dim < 3; dim++) {
-            BucketInfo buckets[numberOfSplits];
+            BucketInfo buckets[numberOfBuckets];
 
             // Assign each triangle to a bucket
             for (int i = box.start; i < box.start + box.count; i++) {
@@ -98,13 +100,13 @@ private:
                 buckets[b].bounds.expandToInclude(triangles[i]);
             }
 
-            for (int split = 1; split < numberOfSplits; split++) {
+            for (int split = 1; split < numberOfBuckets; split++) {
                 boundingVolume leftBox{}, rightBox{};
 
                 for (int i = 0; i < split; i++) {
                     leftBox.expandToInclude(buckets[i].bounds);
                 }
-                for (int j = split; j < numberOfSplits; j++) {
+                for (int j = split; j < numberOfBuckets; j++) {
                     rightBox.expandToInclude(buckets[j].bounds);
                 }
 
@@ -119,7 +121,8 @@ private:
                     const float minVal = box.minPoint[dim];
                     const float maxVal = box.maxPoint[dim];
                     const float range = maxVal - minVal;
-                    bestPos = minVal + (static_cast<float>(split) / numberOfSplits) * range;
+                    bestPos = minVal + (static_cast<float>(split) / numberOfBuckets) * range;
+
                 }
             }
         }

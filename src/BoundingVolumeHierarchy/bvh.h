@@ -22,8 +22,9 @@ public:
 
     virtual ~BVH() = default;
 
-    void build() {
-        boxes.resize(1 << (maxDepth + 1));
+    virtual void build() {
+        auto leafCount = glm::ceil(triangles.size() / minTriangles);
+        boxes.resize(2 * leafCount - 1);
         buildBoundingVolume(0, 0, static_cast<int>(triangles.size()));
         divide(maxDepth, 0);
     }
@@ -37,31 +38,83 @@ public:
         return hitRecursive(r, ray_t, rec, 0);
     }
 
-    bool hitRecursive(const ray &r, const interval ray_t, hitRecord &rec, const int index) const {
-        if (index < 0 || index >= static_cast<int>(boxes.size())) return false;
+    int intersect(const ray &r, const interval ray_t, hitRecord &rec) const {
+        return intersectRecursive(r, ray_t, rec, 0, 0);
+    }
+
+    int intersectRecursive(const ray &r, const interval ray_t, hitRecord &rec, int index, int count) const {
+        if (index < 0 || index >= boxes.size()) return 0;
         const boundingVolume &box = boxes[index];
-        if (!box.hit(r, ray_t, rec)) return false;
+        if (float hitDist; !box.hit(r, ray_t, rec, hitDist)) return 0;
+        if (box.isLeaf) return 0;
+
+        const int leftChildIndex = getLeftChildIndex(index);
+        const int rightChildIndex = getRightChildIndex(index);
+
+        count += intersectRecursive(r, ray_t, rec, leftChildIndex, count + 1) + intersectRecursive(
+            r, ray_t, rec, rightChildIndex, count + 1);
+
+        return count;
+    }
+
+    bool hitRecursive(const ray &r, const interval ray_t, hitRecord &rec, const int index) const {
+        if (index < 0 || index >= boxes.size()) return false;
+
+        const boundingVolume &box = boxes[index];
+
+        if (float hitDist; !box.hit(r, ray_t, rec, hitDist)) return false;
 
         if (box.isLeaf) return hitTriangles(r, ray_t, rec, box.start, box.count);
+
         // Internal Node
+        const int leftIndex = getLeftChildIndex(index);
+        const int rightIndex = getRightChildIndex(index);
+
+        float hitDistLeft;
+        const bool hitLeft = boxes[leftIndex].hit(r, ray_t, rec, hitDistLeft);
+        float hitDistRight;
+        const bool hitRight = boxes[rightIndex].hit(r, ray_t, rec, hitDistRight);
+
         hitRecord tempRec{};
         bool hitAnything = false;
         double closestSoFar = ray_t.max;
 
-        const int leftIndex = getLeftChildIndex(index);
-        const int rightIndex = getRightChildIndex(index);
-
-        // Left child node
-        if (hitRecursive(r, interval(ray_t.min, closestSoFar), tempRec, leftIndex)) {
-            hitAnything = true;
-            closestSoFar = tempRec.t;
-            rec = tempRec;
-        }
-
-        // Right child Node
-        if (hitRecursive(r, interval(ray_t.min, closestSoFar), tempRec, rightIndex)) {
-            hitAnything = true;
-            rec = tempRec;
+        if (hitLeft && hitRight) {
+            if (hitDistLeft < hitDistRight) {
+                if (hitRecursive(r, interval(ray_t.min, closestSoFar), tempRec, leftIndex)) {
+                    hitAnything = true;
+                    closestSoFar = tempRec.t;
+                    rec = tempRec;
+                }
+                if (hitRecursive(r, interval(ray_t.min, closestSoFar), tempRec, rightIndex)) {
+                    hitAnything = true;
+                    closestSoFar = tempRec.t;
+                    rec = tempRec;
+                }
+            } else {
+                if (hitRecursive(r, interval(ray_t.min, closestSoFar), tempRec, rightIndex)) {
+                    hitAnything = true;
+                    closestSoFar = tempRec.t;
+                    rec = tempRec;
+                }
+                if (hitRecursive(r, interval(ray_t.min, closestSoFar), tempRec, leftIndex)) {
+                    hitAnything = true;
+                    closestSoFar = tempRec.t;
+                    rec = tempRec;
+                }
+            }
+        } else if (hitLeft) {
+            if (hitRecursive(r, interval(ray_t.min, closestSoFar), tempRec, leftIndex)) {
+                hitAnything = true;
+                closestSoFar = tempRec.t;
+                rec = tempRec;
+            }
+        } else if (hitRight) {
+            if (hitRecursive(r, interval(ray_t.min, closestSoFar), tempRec, rightIndex)) {
+                hitAnything = true;
+                closestSoFar = tempRec.t;
+                rec = tempRec;
+            }
         }
 
         return hitAnything;
@@ -99,5 +152,6 @@ protected:
         }
     }
 };
+
 
 #endif //BACHELORPROJECT_BVH_H
