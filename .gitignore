@@ -40,3 +40,6 @@
 *.dwo
 
 CMakeCache.txt
+
+models/
+scenes/
