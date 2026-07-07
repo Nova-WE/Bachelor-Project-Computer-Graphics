@@ -135,18 +135,31 @@ void heatMapLBVH(const std::vector<triangle> &triangles, camera cam, const char*
 
 void bucketsTest(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, const camera &cam) {
     std::ofstream timingLog2("../logs/bucketsTestPowerOfTwo.txt");
-    for (int i = 1; i <= 7; i++) {
+    for (int i = 1; i <= 6; i++) {
         std::clog << i << std::endl;
         buildSAH(triangles, lights, cam, timingLog2, "../images/bucketsTest.png", 1 << i);
     }
     timingLog2.close();
-
+/*
     std::ofstream timingLog7("../logs/bucketsTestMultipleOfSeven.txt");
     for (int j = 0; j <= 7; j++) {
         std::clog << j << std::endl;
         buildSAH(triangles, lights, cam, timingLog7, "../images/bucketsTest.png", 7 + j * 7);
     }
     timingLog7.close();
+    */
+}
+
+void heatmapBucketsTest(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, camera &cam) {
+    for (int i = 1; i <= 6; i++) {
+        std::clog << i << std::endl;
+        SAH sah(triangles);
+        sah.maxDepth = 20;
+        sah.minTriangles = 16;
+        sah.numberOfBuckets = 1 << i;
+        sah.build();
+        cam.heatmap(sah, ("../heatmaps/bucketsTest" + std::to_string(1 << i) + ".png").c_str());
+    }
 }
 
 int main() {
@@ -154,8 +167,8 @@ int main() {
     camera cam;
 
     cam.aspectRatio = 16.0 / 9.0;
-    cam.imageWidth = 1920;
-    cam.samplesPerPixel = 5;
+    cam.imageWidth = 1000;
+    cam.samplesPerPixel = 10;
     cam.maxDepth = 20;
 
     cam.vFov = 23;
@@ -169,7 +182,7 @@ int main() {
 
     std::ofstream timingLog("../logs/timing.txt");
 
-    auto modelPath = "../models/occlusion.obj";
+    auto modelPath = "../models/hairball.obj";
     auto outputImagePath = "../images/" + std::filesystem::path(modelPath).stem().string();
     auto outputHeatmapPath = "../heatmaps/" + std::filesystem::path(modelPath).stem().string();
 
@@ -180,10 +193,11 @@ int main() {
 
     const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
 
-    //bucketsTest(model->getTriangles(), model->getLights(), cam);
+    bucketsTest(model->getTriangles(), model->getLights(), cam);
+    //heatmapBucketsTest(model->getTriangles(), model->getLights(), cam);
 
     //buildMedianSplit(model->getTriangles(), model->getLights(), cam, timingLog, (outputImagePath + "/Median.png").c_str());
-    buildSAH(model->getTriangles(), model->getLights(), cam, timingLog, (outputImagePath + "/SAH.png").c_str());
+    //buildSAH(model->getTriangles(), model->getLights(), cam, timingLog, (outputImagePath + "/SAH.png").c_str());
     //buildLBVH(model->getTriangles(), model->getLights(), cam, timingLog, (outputImagePath + "/LBVH.png").c_str());
 
     //heatMapMedian(model->getTriangles(), cam, (outputHeatmapPath + "/Median.png").c_str());
