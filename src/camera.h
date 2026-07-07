@@ -15,15 +15,15 @@
 class camera {
 public:
   // default Camera parameters
-  double aspectRatio = 1.0;
+  double aspectRatio = 16.0 / 9.0;
   int imageWidth = 100;
-  int samplesPerPixel = 10;
-  int maxDepth = 10;
+  int samplesPerPixel = 1;
+  int maxDepth = 20;
 
-  double vFov = 90.0;
+  double vFov = 23.0;
   glm::vec3 lookFrom = glm::vec3(0, 0, 0);
   glm::vec3 lookAt = glm::vec3(0, 0, -1);
-  glm::vec3 vUp = glm::vec3(0, 1, 0);
+  glm::vec3 vUp = glm::vec3(0, -1, 0);
 
   double defocusAngle = 0;
   float focusDist = 10;
@@ -83,6 +83,24 @@ public:
     std::clog << "\rDone.                  \n";
   }
 
+  void averageIntersections(const BVH &world) {
+    initialize();
+
+    int hits = 0;
+    for (int j = 0; j < imageHeight; j++) {
+      std::clog << "\nScanlines remaining: " << imageHeight - j << " " << std::flush;
+      for (int i = 0; i < imageWidth; i++) {
+        for (int s = 0; s < samplesPerPixel; s++) {
+          ray r = getRay(i, j);
+          hits += triangleIntersections(r, maxDepth, world);
+        }
+      }
+    }
+    std::clog << "\rDone.                  \n";
+    std::clog << "Hits: " << hits << " " << std::flush;
+    std::clog << "Average hits per pixel: " << static_cast<float>(hits) / static_cast<float>(imageWidth * imageHeight * samplesPerPixel) << std::flush;
+  }
+
 private:
   int imageHeight;
   float pixelSampleScale;
@@ -131,8 +149,7 @@ private:
   }
 
   [[nodiscard]] ray getRay(const int i, const int j) const {
-    const glm::vec3 offset = sampleSquare();
-    //const glm::vec3 offset = glm::vec3(0, 0, 0);
+    const glm::vec2 offset = samplesPerPixel > 1 ? sampleSquare() : glm::vec2(0,0);
 
     const auto pixelSample = pixel00pos + (static_cast<float>(i) + offset.x) * pixelDelta_u + (static_cast<float>(j) + offset.y) * pixelDelta_v;
 
@@ -142,8 +159,8 @@ private:
     return {rayOrigin, rayDirection};
   }
 
-  static glm::vec3 sampleSquare() {
-    return {randomDouble() - 0.5, randomDouble() - 0.5, 0};
+  static glm::vec2 sampleSquare() {
+    return {randomDouble() - 0.5, randomDouble() - 0.5};
   }
 
   [[nodiscard]] glm::vec3 defocusDiskSample() const {
@@ -186,6 +203,13 @@ private:
     constexpr float upperLimit = 700;
 
     return glm::mix(color(0, 0, 0.5), color(1, 0, 0), (hits - lowerLimit) / (upperLimit - lowerLimit));
+  }
+
+  static int triangleIntersections(const ray &r, const int depth, const BVH &world) {
+    if (depth <= 0) return 0;
+
+    hitRecord rec;
+    return world.triIntersect(r, interval(0.001, infinity), rec);
   }
 
   static glm::vec3 jitter(const triangle &light) {

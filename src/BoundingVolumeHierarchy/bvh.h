@@ -42,7 +42,23 @@ public:
         return intersectRecursive(r, ray_t, rec, 0, 0);
     }
 
-    int intersectRecursive(const ray &r, const interval ray_t, hitRecord &rec, int index, int count) const {
+    int triIntersect(const ray &r, const interval ray_t, hitRecord &rec) const {
+        return triIntersectRecursive(r, ray_t, rec, 0);
+    }
+
+    int triIntersectRecursive(const ray &r, const interval ray_t, hitRecord &rec, const int index) const {
+        if (index < 0 || index >= boxes.size()) return 0;
+        const boundingVolume &box = boxes[index];
+        if (float hitDist; !box.hit(r, ray_t, rec, hitDist)) return 0;
+        if (box.isLeaf) return box.count;
+
+        const int leftChildIndex = getLeftChildIndex(index);
+        const int rightChildIndex = getRightChildIndex(index);
+
+        return triIntersectRecursive(r, ray_t, rec, leftChildIndex) + triIntersectRecursive(r, ray_t, rec, rightChildIndex);
+    }
+
+    int intersectRecursive(const ray &r, const interval ray_t, hitRecord &rec, const int index, int count) const {
         if (index < 0 || index >= boxes.size()) return 0;
         const boundingVolume &box = boxes[index];
         if (float hitDist; !box.hit(r, ray_t, rec, hitDist)) return 0;

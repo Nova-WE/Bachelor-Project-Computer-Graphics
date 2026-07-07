@@ -1,2 +1,2 @@
-Timing Log of: ../models/hairball.obj
+Timing Log of: ../models/dragon.obj
  
