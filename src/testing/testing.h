@@ -41,7 +41,7 @@ public:
         bucketsTest(model.getTriangles(), model.getLights(), cam);
     }
 
-    void fastrender(const char *modelPath, const triangleModel &model, const camera &cam) const {
+    void fastRender(const char *modelPath, const triangleModel &model, const camera &cam) const {
         std::ofstream timingLog("../logs/timing.txt");
         timingLog << "Timing Log of: " << modelPath << "\n \n";
 
