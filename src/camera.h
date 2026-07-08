@@ -32,7 +32,7 @@ public:
     initialize();
 
     // Render final image
-    unsigned char data[imageWidth * imageHeight * 3];
+    std::vector<unsigned char> data(imageWidth * imageHeight * 3);
 
     std::atomic<int> completedScanLines{0};
 
@@ -60,14 +60,14 @@ public:
       }
 
     }
-    stbi_write_png(outputPath, imageWidth, imageHeight, 3, data, imageWidth * 3);
+    stbi_write_png(outputPath, imageWidth, imageHeight, 3, data.data(), imageWidth * 3);
     std::clog << "\rDone.                   \n";
   }
 
   void heatmap(const BVH &world, const char* outputPath) {
     initialize();
 
-    unsigned char data[imageWidth * imageHeight * 3];
+    std::vector<unsigned char> data(imageWidth * imageHeight * 3);
 
     #pragma omp parallel for
     for (int j = 0; j < imageHeight; j++) {
@@ -79,7 +79,7 @@ public:
         write_color(data, index, pixelColor);
       }
     }
-    stbi_write_png(outputPath, imageWidth, imageHeight, 3, data, imageWidth * 3);
+    stbi_write_png(outputPath, imageWidth, imageHeight, 3, data.data(), imageWidth * 3);
     std::clog << "\rDone.                  \n";
   }
 
