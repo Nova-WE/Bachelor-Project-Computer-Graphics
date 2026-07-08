@@ -12,8 +12,8 @@ void renderModel(const char* modelPath, camera cam) {
 int main() {
     camera cam;
     // set view axis to -Y on export in Blender !!!!
-    cam.imageWidth = 1000;
-    cam.samplesPerPixel = 1;
+    cam.imageWidth = 1920;
+    cam.samplesPerPixel = 5;
 
     /*
     auto modelPath = "../models/hairball.obj";

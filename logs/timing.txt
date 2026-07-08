@@ -2,6 +2,6 @@ Timing Log of: ../models/occlusionCubesHigh.obj
  
 SAH: Leaves=26 Internals=25 MaxDepth=6 LeafSizes=[1, 58]
 SAH build time: 3 ms
-SAH render time: 1131357 ms
-Total time: 1131360 ms
+SAH render time: 7895747 ms
+Total time: 7895750 ms
 
