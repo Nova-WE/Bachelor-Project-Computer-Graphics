@@ -1,30 +1,35 @@
 SAH: Leaves=94313 Internals=94312 MaxDepth=18 LeafSizes=[1, 50921]
-SAH build time: 13681 ms
-SAH render time: 25823 ms
-Total time: 39504 ms
+SAH build time: 13019 ms
+SAH render time: 29950 ms
+Total time: 42969 ms
 
 SAH: Leaves=110422 Internals=110421 MaxDepth=18 LeafSizes=[1, 3487]
-SAH build time: 15170 ms
-SAH render time: 25888 ms
-Total time: 41058 ms
+SAH build time: 14311 ms
+SAH render time: 29794 ms
+Total time: 44105 ms
 
 SAH: Leaves=124416 Internals=124415 MaxDepth=18 LeafSizes=[1, 3745]
-SAH build time: 16944 ms
-SAH render time: 22506 ms
-Total time: 39450 ms
+SAH build time: 16041 ms
+SAH render time: 25314 ms
+Total time: 41355 ms
 
 SAH: Leaves=130083 Internals=130082 MaxDepth=18 LeafSizes=[1, 2228]
-SAH build time: 22113 ms
-SAH render time: 20500 ms
-Total time: 42613 ms
+SAH build time: 21368 ms
+SAH render time: 22644 ms
+Total time: 44012 ms
 
 SAH: Leaves=131278 Internals=131277 MaxDepth=18 LeafSizes=[1, 1448]
-SAH build time: 39744 ms
-SAH render time: 20100 ms
-Total time: 59844 ms
+SAH build time: 39509 ms
+SAH render time: 21984 ms
+Total time: 61493 ms
 
 SAH: Leaves=130424 Internals=130423 MaxDepth=18 LeafSizes=[1, 1812]
-SAH build time: 103734 ms
-SAH render time: 19501 ms
-Total time: 123235 ms
+SAH build time: 104399 ms
+SAH render time: 21637 ms
+Total time: 126036 ms
+
+SAH: Leaves=117535 Internals=117534 MaxDepth=18 LeafSizes=[1, 11664]
+SAH build time: 13731 ms
+SAH render time: 27681 ms
+Total time: 41412 ms
 

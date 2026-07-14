@@ -6,6 +6,7 @@
 #define BACHELORPROJECT_LINEARBVH_H
 
 #include "bvh.h"
+#include <algorithm>
 
 class LBVH : public BVH {
 public:

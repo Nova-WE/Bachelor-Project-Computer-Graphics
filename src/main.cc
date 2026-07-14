@@ -18,21 +18,25 @@ void generateHeatmap(const char* modelPath, camera cam) {
 int main() {
     camera cam;
     // set view axis to -Y on export in Blender !!!!
-    cam.imageWidth = 1920;
-    cam.samplesPerPixel = 5;
+    cam.imageWidth = 1000;
+    cam.samplesPerPixel = 1;
 
-    const auto modelPath = "../models/dragon.obj";
+    const auto modelPath = "../models/lucy.obj";
+
+    renderModel(modelPath, cam);
 
     /*
     const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
-    const Rendering r(modelPath);
-    r.render(modelPath, *model, cam);
+    Rendering::bucketTest(*model, cam);
     */
+
     //generateHeatmap(modelPath, cam);
 
     //averageTriangleIntersections::calculate(*model, cam);
 
+    /*
     renderModel("../models/occlusionCubesLow.obj", cam);
     renderModel("../models/occlusionCubesMiddle.obj", cam);
     renderModel("../models/occlusionCubesHigh.obj", cam);
+    */
 }

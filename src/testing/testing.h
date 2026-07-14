@@ -114,11 +114,12 @@ private:
     }
 
     static void buildSAH(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, camera cam,
-                  std::ofstream &timingLog, const char *output, int numBuckets = 16) {
+                  std::ofstream &timingLog, const char *output, const int numBuckets = 16, bool adaptiveBuckets = false) {
         SAH sah(triangles);
         sah.maxDepth = 20;
         sah.minTriangles = 16;
         sah.numberOfBuckets = numBuckets;
+        sah.adaptiveBuckets = adaptiveBuckets;
 
         const auto buildTime = timeFunction([&] { sah.build(); });
         printTreeStats(sah, "SAH", timingLog);
@@ -155,15 +156,8 @@ private:
             std::clog << i << std::endl;
             buildSAH(triangles, lights, cam, timingLog2, "../images/bucketsTest.png", 1 << i);
         }
+        buildSAH(triangles, lights, cam, timingLog2, "../images/bucketsTest.png", 16, true);
         timingLog2.close();
-        /*
-            std::ofstream timingLog7("../logs/bucketsTestMultipleOfSeven.txt");
-            for (int j = 0; j <= 7; j++) {
-                std::clog << j << std::endl;
-                buildSAH(triangles, lights, cam, timingLog7, "../images/bucketsTest.png", 7 + j * 7);
-            }
-            timingLog7.close();
-            */
     }
 };
 

@@ -21,6 +21,7 @@ struct Split {
 class SAH : public BVH {
 public:
     int numberOfBuckets = 16;
+    bool adaptiveBuckets = false;
 
     explicit SAH(const std::vector<triangle> &triangles) : BVH(triangles) {}
 
@@ -38,7 +39,10 @@ public:
         // return if max split depth reached
         if (depth <= 0) return;
 
-        //numberOfBuckets = glm::max(2, 1 << static_cast<int>(glm::ceil(depth / 5)));
+        // adaptively adjusts the amount of buckets, based on the depth of the box
+        if (adaptiveBuckets) {
+            numberOfBuckets = glm::max(2, 1 << static_cast<int>(glm::ceil(depth / 5)));
+        }
 
         const auto box = &boxes[parentIndex];
         // return if there are less than the minimum number of triangles are in the box
@@ -72,14 +76,13 @@ public:
 
 private:
     [[nodiscard]] int getBucketIndex(const triangle &tri, const boundingVolume &box, const axis ax) const {
-        const float center = tri.center[ax];
         const float minVal = box.minPoint[ax];
         const float maxVal = box.maxPoint[ax];
         const float range = maxVal - minVal;
 
         if (range < 1e-6f) return 0;
 
-        const int b = static_cast<int>((center - minVal) / range * static_cast<float>(numberOfBuckets));
+        const int b = static_cast<int>((tri.center[ax] - minVal) / range * static_cast<float>(numberOfBuckets));
         return std::clamp(b, 0, numberOfBuckets - 1);
     }
 
@@ -87,8 +90,6 @@ private:
         float bestCost = std::numeric_limits<float>::max();
         float bestPos = 0.5f;
         int bestAxis = X;
-
-        boundingVolume bestLeftBox{}, bestRightBox{};
 
         for (int dim = 0; dim < 3; dim++) {
             BucketInfo buckets[numberOfBuckets];

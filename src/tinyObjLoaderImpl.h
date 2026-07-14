@@ -7,7 +7,7 @@
 
 // Increase tinyobj loader stream limit to 1 GiB
 #ifndef TINYOBJLOADER_STREAM_READER_MAX_BYTES
-#define TINYOBJLOADER_STREAM_READER_MAX_BYTES (size_t(1024) * size_t(1024) * size_t(1024))
+#define TINYOBJLOADER_STREAM_READER_MAX_BYTES (size_t(2048) * size_t(2048) * size_t(2048));
 #endif
 
 #define TINYOBJLOADER_IMPLEMENTATION

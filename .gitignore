@@ -42,3 +42,7 @@
 CMakeCache.txt
 
 *.blend1
+
+models/lucy.mtl
+models/lucy.obj
+scenes/lucy.blend

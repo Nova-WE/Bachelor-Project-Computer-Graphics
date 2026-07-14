@@ -6,7 +6,7 @@
 #define BACHELORPROJECT_BOUNDINGVOLUME_H
 #include "../hittable.h"
 #include "../triangleModel.h"
-#include <algorithm>
+
 
 enum axis {
     X, Y, Z
@@ -31,14 +31,14 @@ public:
         auto close = -std::numeric_limits<float>::infinity();
         auto far = std::numeric_limits<float>::infinity();
         for (int i = 0; i < 3; i++) {
-            const float rayDir = r.direction()[i];
-            if (std::abs(rayDir) < 1e-6f) {
+            const float rayDir_i = r.direction()[i];
+            if (std::abs(rayDir_i) < 1e-6f) {
                 if (r.origin()[i] < minPoint[i] || r.origin()[i] > maxPoint[i]) return false;
                 continue;
             }
 
-            const auto t_low = (minPoint[i] - r.origin()[i]) / rayDir;
-            const auto t_high = (maxPoint[i] - r.origin()[i]) / rayDir;
+            const auto t_low = (minPoint[i] - r.origin()[i]) / rayDir_i;
+            const auto t_high = (maxPoint[i] - r.origin()[i]) / rayDir_i;
             const auto t_close_i = glm::min(t_low, t_high);
             const auto t_far_i = glm::max(t_low, t_high);
             close = glm::max(close, t_close_i);

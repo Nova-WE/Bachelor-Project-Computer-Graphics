@@ -106,14 +106,15 @@ public:
 
 class triangleModel : public hittable {
 public:
-    glm::vec3 Min;
-    glm::vec3 Max;
-    MortonCode codeGenerator;
+    glm::vec3 Min{};
+    glm::vec3 Max{};
+    MortonCode codeGenerator{Min, Max};
 
-    triangleModel(const char *filename, glm::vec3 &cameraPosition) : codeGenerator(Min, Max) {
+    triangleModel(const char *filename, glm::vec3 &cameraPosition) {
         Min = glm::vec3(std::numeric_limits<float>::max());
         Max = glm::vec3(-std::numeric_limits<float>::max());
 
+        // reads the .obj file using tinyObjLoader
         std::string warn, err;
         bool success = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
                                         filename, "../models", true);
@@ -122,6 +123,7 @@ public:
             std::cout << err << std::endl;
             return;
         }
+        // converts the obj data into triangles
         for (const auto &shape: shapes) {
             int counter = 3;
             std::vector<vertex> vertices;
@@ -148,7 +150,7 @@ public:
 
                     auto mat = make_shared<phong>(materials[shape.mesh.material_ids[0]], cameraPosition);
 
-                    auto tri = triangle(vertices[0], vertices[1], vertices[2], normal, mat);
+                    const auto tri = triangle(vertices[0], vertices[1], vertices[2], normal, mat);
 
                     if (tri.mat->isEmissive) {
                         lights.push_back(tri);
@@ -161,6 +163,7 @@ public:
                 }
             }
         }
+        // assigns a morton code for each triangle
         codeGenerator = MortonCode(Min, Max);
         calculateGridIndices();
 
@@ -189,7 +192,6 @@ public:
     void calculateGridIndices() {
         for (auto &tri: triangles) {
             tri.mortonCode = codeGenerator.encode(tri.center);
-            //std::cout << std::bitset<64>(tri.mortonCode) << std::endl;
         }
     }
 

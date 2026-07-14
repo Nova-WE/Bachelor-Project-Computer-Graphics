@@ -14,7 +14,7 @@ public:
     MortonCode(const glm::vec3 min, const glm::vec3 max) : min(min), max(max) {
     }
 
-    glm::u64 encode(const glm::vec3 v) const {
+    [[nodiscard]] glm::u64 encode(const glm::vec3 v) const {
         const glm::u32 x = normalize(v.x, min.x, max.x);
         const glm::u32 y = normalize(v.y, min.y, max.y);
         const glm::u32 z = normalize(v.z, min.z, max.z);
@@ -25,13 +25,13 @@ public:
 private:
     glm::vec3 min, max;
 
-    static glm::u32 normalize(float v, float minV, float maxV) {
+    static glm::u32 normalize(const float v, const float minV, const float maxV) {
         float t = (v - minV) / (maxV - minV);
         t = glm::clamp(t, 0.0f, 1.0f);
         return static_cast<glm::u32>(t * MAX_COORDS);
     }
 
-    static glm::u64 splitBy3(glm::u32 a) {
+    static glm::u64 splitBy3(const glm::u32 a) {
         uint64_t x = a & 0x1fffff;
 
         x = (x | x << 32) & 0x1f00000000ffff;
