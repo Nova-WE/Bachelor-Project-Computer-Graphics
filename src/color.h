@@ -1,6 +1,7 @@
 #if !defined(COLOR_H)
 #define COLOR_H
 
+#include <vector>
 #include <glm/glm.hpp>
 #include "interval.h"
 

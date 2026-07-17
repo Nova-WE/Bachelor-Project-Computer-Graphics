@@ -45,7 +45,7 @@ public:
         std::ofstream timingLog("../logs/timing.txt");
         timingLog << "Timing Log of: " << modelPath << "\n \n";
 
-        buildLBVH(model.getTriangles(), model.getLights(), cam, timingLog, (outputImagePath + "/SAH.png").c_str());
+        buildSAH(model.getTriangles(), model.getLights(), cam, timingLog, (outputImagePath + "/SAH.png").c_str());
 
         timingLog.close();
     }

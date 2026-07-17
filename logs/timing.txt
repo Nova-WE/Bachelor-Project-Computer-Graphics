@@ -1,6 +1,7 @@
-Timing Log of: ../models/city.obj
+Timing Log of: ../models/cityOcclusion.obj
  
-LBVH: Leaves=1084393 Internals=1084392 MaxDepth=40 LeafSizes=[1, 58]
-LBVH Split build time: 29718 ms
-LBVH render time: 24255 ms
-Total time: 53973 ms
+SAH: Leaves=1019507 Internals=1019530 MaxDepth=30 LeafSizes=[1, 909]
+SAH build time: 96035 ms
+SAH render time: 1512717 ms
+Total time: 1608752 ms
+

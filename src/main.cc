@@ -3,12 +3,6 @@
 #include "triangleModel.h"
 #include "testing/testing.h"
 
-void renderModel(const char* modelPath, camera cam) {
-    const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
-    const Rendering r(modelPath);
-    r.fastRender(modelPath, *model, cam);
-}
-
 void generateHeatmap(const char* modelPath, camera cam) {
     const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
     const Heatmap h(modelPath);
@@ -18,19 +12,19 @@ void generateHeatmap(const char* modelPath, camera cam) {
 int main() {
     camera cam;
     // set view axis to -Y on export in Blender !!!!
-    cam.imageWidth = 1920;
+    cam.imageWidth = 1000;
     cam.samplesPerPixel = 1;
 
-    const auto modelPath = "../models/dragon.obj";
-    //const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
-    //const Rendering r(modelPath);
+    const auto modelPath = "../models/cityOcclusion.obj";
+    const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
+
+    const Rendering r(modelPath);
     //r.render(modelPath, *model, cam);
+    r.fastRender(modelPath, *model, cam);
 
     //Rendering::bucketTest(*model, cam);
 
-    //renderModel(modelPath, cam);
-
-    generateHeatmap(modelPath, cam);
+    //generateHeatmap(modelPath, cam);
 
     //averageTriangleIntersections::calculate(*model, cam);
 
