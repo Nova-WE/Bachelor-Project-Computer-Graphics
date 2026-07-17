@@ -1,0 +1,6 @@
+Timing Log of: ../models/city.obj
+ 
+LBVH: Leaves=1084393 Internals=1084392 MaxDepth=40 LeafSizes=[1, 58]
+LBVH Split build time: 29718 ms
+LBVH render time: 24255 ms
+Total time: 53973 ms

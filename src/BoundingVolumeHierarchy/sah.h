@@ -43,35 +43,33 @@ public:
         if (adaptiveBuckets) {
             numberOfBuckets = glm::max(2, 1 << static_cast<int>(glm::ceil(depth / 5)));
         }
-
-        const auto box = &boxes[parentIndex];
         // return if there are less than the minimum number of triangles are in the box
-        if (box->count < minTriangles) return;
+        if (boxes[parentIndex].count < minTriangles) return;
 
-        const auto [cost, position, ax] = chooseSplit(*box);
+        const auto [cost, position, ax] = chooseSplit(boxes[parentIndex]);
         // return if splitting would increase the cost
-        if (cost >= box->boxCost) return;
+        if (cost >= boxes[parentIndex].boxCost) return;
 
         const auto mid_it = std::partition(
-            triangles.begin() + box->start,
-            triangles.begin() + box->start + box->count,
+            triangles.begin() + boxes[parentIndex].start,
+            triangles.begin() + boxes[parentIndex].start + boxes[parentIndex].count,
             [&](const triangle &tri) {
                 return tri.center[ax] < position;
             }
         );
-        const int mid = static_cast<int>(std::distance(triangles.begin() + box->start, mid_it));
+        const int mid = static_cast<int>(std::distance(triangles.begin() + boxes[parentIndex].start, mid_it));
 
-        const int leftIndex = getLeftChildIndex(parentIndex);
-        const int rightIndex = getRightChildIndex(parentIndex);
+        boxes[parentIndex].leftIndex = boxes.size();
+        boxes.emplace_back();
+        boxes[parentIndex].rightIndex = boxes.size();
+        boxes.emplace_back();
 
-        if (leftIndex >= boxes.size() || rightIndex >= boxes.size()) return;
+        buildBoundingVolume(boxes[parentIndex].leftIndex, boxes[parentIndex].start, mid);
+        buildBoundingVolume(boxes[parentIndex].rightIndex, boxes[parentIndex].start + mid, boxes[parentIndex].count - mid);
 
-        buildBoundingVolume(leftIndex, box->start, mid);
-        buildBoundingVolume(rightIndex, box->start + mid, box->count - mid);
-
-        box->isLeaf = false;
-        divide(depth - 1, leftIndex);
-        divide(depth - 1, rightIndex);
+        boxes[parentIndex].isLeaf = false;
+        divide(depth - 1, boxes[parentIndex].leftIndex);
+        divide(depth - 1, boxes[parentIndex].rightIndex);
     }
 
 private:

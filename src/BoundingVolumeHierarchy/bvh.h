@@ -23,8 +23,7 @@ public:
     virtual ~BVH() = default;
 
     virtual void build() {
-        auto leafCount = glm::ceil(triangles.size() / minTriangles);
-        boxes.resize(2 * leafCount - 1);
+        boxes.resize(1);
         buildBoundingVolume(0, 0, static_cast<int>(triangles.size()));
         divide(maxDepth, 0);
     }
@@ -52,10 +51,7 @@ public:
         if (float hitDist; !box.hit(r, ray_t, rec, hitDist)) return 0;
         if (box.isLeaf) return box.count;
 
-        const int leftChildIndex = getLeftChildIndex(index);
-        const int rightChildIndex = getRightChildIndex(index);
-
-        return triIntersectRecursive(r, ray_t, rec, leftChildIndex) + triIntersectRecursive(r, ray_t, rec, rightChildIndex);
+        return triIntersectRecursive(r, ray_t, rec, box.leftIndex) + triIntersectRecursive(r, ray_t, rec, box.rightIndex);
     }
 
     int intersectRecursive(const ray &r, const interval ray_t, hitRecord &rec, const int index, int count) const {
@@ -64,11 +60,8 @@ public:
         if (float hitDist; !box.hit(r, ray_t, rec, hitDist)) return 0;
         if (box.isLeaf) return 0;
 
-        const int leftChildIndex = getLeftChildIndex(index);
-        const int rightChildIndex = getRightChildIndex(index);
-
-        count += intersectRecursive(r, ray_t, rec, leftChildIndex, count + 1) + intersectRecursive(
-            r, ray_t, rec, rightChildIndex, count + 1);
+        count += intersectRecursive(r, ray_t, rec, box.leftIndex, count + 1) + intersectRecursive(
+            r, ray_t, rec, box.rightIndex, count + 1);
 
         return count;
     }
@@ -83,8 +76,8 @@ public:
         if (box.isLeaf) return hitTriangles(r, ray_t, rec, box.start, box.count);
 
         // Internal Node
-        const int leftIndex = getLeftChildIndex(index);
-        const int rightIndex = getRightChildIndex(index);
+        const int leftIndex = box.leftIndex;
+        const int rightIndex = box.rightIndex;
 
         float hitDistLeft;
         const bool hitLeft = boxes[leftIndex].hit(r, ray_t, rec, hitDistLeft);
@@ -152,14 +145,6 @@ public:
     }
 
 protected:
-    static int getLeftChildIndex(const int i) {
-        return 2 * i + 1;
-    }
-
-    static int getRightChildIndex(const int i) {
-        return 2 * i + 2;
-    }
-
     void buildFromTriangles(boundingVolume &box, const int start, const int count) const {
         box.count = 0;
         for (int i = start; i < start + count; i++) {

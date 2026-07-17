@@ -25,31 +25,30 @@ public:
         // return if max split depth reached
         if (depth <= 0) return;
 
-        const auto box = &boxes[parentIndex];
-        if (box->count <= minTriangles) return;
+        if (boxes[parentIndex].count <= minTriangles) return;
 
-        const int mid = box->count / 2;
+        const int mid = boxes[parentIndex].count / 2;
         std::nth_element(
-            triangles.begin() + box->start,
-            triangles.begin() + box->start + mid,
-            triangles.begin() + box->start + box->count,
+            triangles.begin() + boxes[parentIndex].start,
+            triangles.begin() + boxes[parentIndex].start + mid,
+            triangles.begin() + boxes[parentIndex].start + boxes[parentIndex].count,
             [&](const triangle &a, const triangle &b) {
-                return comp(a, b, box->longestAxis);
+                return comp(a, b, boxes[parentIndex].longestAxis);
             }
         );
 
-        const int leftIndex = getLeftChildIndex(parentIndex);
-        const int rightIndex = getRightChildIndex(parentIndex);
+        boxes[parentIndex].leftIndex = boxes.size();
+        boxes.emplace_back();
+        boxes[parentIndex].rightIndex = boxes.size();
+        boxes.emplace_back();
 
-        if (leftIndex >= boxes.size() || rightIndex >= boxes.size()) return;
+        buildBoundingVolume(boxes[parentIndex].leftIndex, boxes[parentIndex].start, mid);
+        buildBoundingVolume(boxes[parentIndex].rightIndex, boxes[parentIndex].start + mid, boxes[parentIndex].count - mid);
 
-        buildBoundingVolume(leftIndex, box->start, mid);
-        buildBoundingVolume(rightIndex, box->start + mid, box->count - mid);
+        boxes[parentIndex].isLeaf = false;
 
-        box->isLeaf = false;
-
-        divide(depth - 1, leftIndex);
-        divide(depth - 1, rightIndex);
+        divide(depth - 1, boxes[parentIndex].leftIndex);
+        divide(depth - 1, boxes[parentIndex].rightIndex);
     }
 
 private:

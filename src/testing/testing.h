@@ -45,7 +45,7 @@ public:
         std::ofstream timingLog("../logs/timing.txt");
         timingLog << "Timing Log of: " << modelPath << "\n \n";
 
-        buildSAH(model.getTriangles(), model.getLights(), cam, timingLog, (outputImagePath + "/SAH.png").c_str());
+        buildLBVH(model.getTriangles(), model.getLights(), cam, timingLog, (outputImagePath + "/SAH.png").c_str());
 
         timingLog.close();
     }
@@ -86,8 +86,8 @@ private:
                 maxLeafSize = std::max(maxLeafSize, box.count);
             } else {
                 internalCount++;
-                traverse(2 * idx + 1, depth + 1);
-                traverse(2 * idx + 2, depth + 1);
+                traverse(box.leftIndex, depth + 1);
+                traverse(box.rightIndex, depth + 1);
             }
         };
         traverse(0, 0);
@@ -100,7 +100,7 @@ private:
     static void buildMedianSplit(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, camera cam,
                           std::ofstream &timingLog, const char *output) {
         MedianSplit median_split(triangles);
-        median_split.maxDepth = 20;
+        median_split.maxDepth = 30;
         median_split.minTriangles = 16;
 
         const auto buildTime = timeFunction([&] { median_split.build(); });
@@ -116,7 +116,7 @@ private:
     static void buildSAH(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, camera cam,
                   std::ofstream &timingLog, const char *output, const int numBuckets = 16, bool adaptiveBuckets = false) {
         SAH sah(triangles);
-        sah.maxDepth = 20;
+        sah.maxDepth = 30;
         sah.minTriangles = 16;
         sah.numberOfBuckets = numBuckets;
         sah.adaptiveBuckets = adaptiveBuckets;
@@ -134,11 +134,10 @@ private:
     static void buildLBVH(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, camera cam,
                    std::ofstream &timingLog, const char *output) {
         LBVH lbvh(triangles);
-        lbvh.maxDepth = 30;
+        lbvh.maxDepth = 40;
         lbvh.minTriangles = 16;
 
         const auto buildTime = timeFunction([&] { lbvh.build(); });
-        std::cout << lbvh.boxes.size() << "\n";
         printTreeStats(lbvh, "LBVH", timingLog);
         const auto renderTime = timeFunction([&] { cam.render(lbvh, lights, output); });
 

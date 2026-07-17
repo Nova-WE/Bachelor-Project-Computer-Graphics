@@ -21,6 +21,9 @@ public:
     axis longestAxis = X;
     float boxCost = 0;
 
+    int leftIndex = -1;
+    int rightIndex = -1;
+
     boundingVolume() {
         minPoint = glm::vec3(1) * std::numeric_limits<float>::infinity();
         maxPoint = glm::vec3(-1) * std::numeric_limits<float>::infinity();

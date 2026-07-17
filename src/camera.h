@@ -200,7 +200,7 @@ private:
     const int hits = world.intersect(r, interval(0.001, infinity), rec);
 
     constexpr float lowerLimit = 1;
-    constexpr float upperLimit = 700;
+    constexpr float upperLimit = 2000;
 
     return glm::mix(color(0, 0, 0.5), color(1, 0, 0), (hits - lowerLimit) / (upperLimit - lowerLimit));
   }

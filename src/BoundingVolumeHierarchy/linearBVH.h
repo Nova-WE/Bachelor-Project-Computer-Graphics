@@ -27,23 +27,22 @@ public:
 
     void divide(const int depth, const int parentIndex) override {
         if (depth <= 0) return;
+        
+        if (boxes[parentIndex].count <= minTriangles) return;
 
-        const auto box = &boxes[parentIndex];
-        if (box->count <= minTriangles) return;
+        const int mid = findSplitIndex(boxes[parentIndex].start, boxes[parentIndex].count);
 
-        const int mid = findSplitIndex(box->start, box->count);
+        boxes[parentIndex].leftIndex = boxes.size();
+        boxes.emplace_back();
+        boxes[parentIndex].rightIndex = boxes.size();
+        boxes.emplace_back();
 
-        const int leftIndex = getLeftChildIndex(parentIndex);
-        const int rightIndex = getRightChildIndex(parentIndex);
+        buildBoundingVolume(boxes[parentIndex].leftIndex, boxes[parentIndex].start, mid);
+        buildBoundingVolume(boxes[parentIndex].rightIndex, boxes[parentIndex].start + mid, boxes[parentIndex].count - mid);
+        boxes[parentIndex].isLeaf = false;
 
-        if (leftIndex >= boxes.size() || rightIndex >= boxes.size()) return;
-
-        buildBoundingVolume(leftIndex, box->start, mid);
-        buildBoundingVolume(rightIndex, box->start + mid, box->count - mid);
-        box->isLeaf = false;
-
-        divide(depth - 1, leftIndex);
-        divide(depth - 1, rightIndex);
+        divide(depth - 1, boxes[parentIndex].leftIndex);
+        divide(depth - 1, boxes[parentIndex].rightIndex);
     }
 
     [[nodiscard]] int findSplitIndex(const int start, const int count) const {
