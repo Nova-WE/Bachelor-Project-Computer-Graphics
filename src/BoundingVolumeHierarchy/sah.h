@@ -25,7 +25,7 @@ public:
 
     explicit SAH(const std::vector<triangle> &triangles) : BVH(triangles) {}
 
-    void buildBoundingVolume(const int boxIndex, const int start, const int count) override {
+    void buildBoundingVolume(const size_t boxIndex, const int start, const int count) override {
         boundingVolume &box = boxes[boxIndex];
         box.start = start;
         box.isLeaf = true;
@@ -35,7 +35,7 @@ public:
         box.calculateBoxCost();
     }
 
-    void divide(const int depth, const int parentIndex) override {
+    void divide(const int depth, const size_t parentIndex) override {
         // return if max split depth reached
         if (depth <= 0) return;
 

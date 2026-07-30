@@ -1,0 +1,7 @@
+Median Split render time with 1 samples: 2733 ms
+Median Split render time with 5 samples: 13426 ms
+Median Split render time with 10 samples: 28377 ms
+Median Split render time with 15 samples: 42823 ms
+Median Split render time with 20 samples: 59479 ms
+Median Split render time with 25 samples: 78737 ms
+

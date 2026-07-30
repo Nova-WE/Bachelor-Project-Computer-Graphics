@@ -6,25 +6,30 @@
 void generateHeatmap(const char* modelPath, camera cam) {
     const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
     const Heatmap h(modelPath);
-    h.generate(*model, cam);
+
+    constexpr float lowerLimit = 1;
+    constexpr float upperLimit = 3000;
+
+    h.generate(*model, cam, lowerLimit, upperLimit);
 }
 
 int main() {
     camera cam;
     // set view axis to -Y on export in Blender !!!!
-    cam.imageWidth = 1000;
+    cam.imageWidth = 1920;
     cam.samplesPerPixel = 1;
 
-    const auto modelPath = "../models/cityOcclusion.obj";
+    const auto modelPath = "../models/dragon.obj";
     const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
 
     const Rendering r(modelPath);
     //r.render(modelPath, *model, cam);
     r.fastRender(modelPath, *model, cam);
+    //r.sampleTest(modelPath, cam);
 
     //Rendering::bucketTest(*model, cam);
 
-    //generateHeatmap(modelPath, cam);
+    generateHeatmap(modelPath, cam);
 
     //averageTriangleIntersections::calculate(*model, cam);
 

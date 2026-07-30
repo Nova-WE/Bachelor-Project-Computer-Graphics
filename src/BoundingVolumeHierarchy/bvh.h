@@ -11,7 +11,7 @@
 
 class BVH : public hittable {
 public:
-    int maxDepth = 20;
+    int maxDepth = 30;
     int minTriangles = 16;
     // array of all bounding volumes
     std::vector<boundingVolume> boxes;
@@ -28,9 +28,9 @@ public:
         divide(maxDepth, 0);
     }
 
-    virtual void buildBoundingVolume(int boxIndex, int start, int count) = 0;
+    virtual void buildBoundingVolume(size_t boxIndex, int start, int count) = 0;
 
-    virtual void divide(int depth, int parentIndex) = 0;
+    virtual void divide(int depth, size_t parentIndex) = 0;
 
 
     bool hit(const ray &r, const interval ray_t, hitRecord &rec) const override {

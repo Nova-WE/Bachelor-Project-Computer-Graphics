@@ -64,19 +64,29 @@ public:
     std::clog << "\rDone.                   \n";
   }
 
-  void heatmap(const BVH &world, const char* outputPath) {
+  void heatmap(const BVH &world, const char* outputPath, const float lowerLimit, const float upperLimit) {
     initialize();
 
     std::vector<unsigned char> data(imageWidth * imageHeight * 3);
 
+    std::atomic<int> completedScanLines{0};
+    std::clog << "\rStarting Render Loop" << std::flush;
+
     #pragma omp parallel for
     for (int j = 0; j < imageHeight; j++) {
-      std::clog << "\nScanlines remaining: " << imageHeight - j << " " << std::flush;
       for (int i = 0; i < imageWidth; i++) {
         const int index = (j * imageWidth + i) * 3;
         ray r = getRay(i, j);
-        color pixelColor = boxIntersections(r, maxDepth, world);
+        color pixelColor = boxIntersections(r, maxDepth, world, lowerLimit, upperLimit);
         write_color(data, index, pixelColor);
+      }
+
+      int done = completedScanLines++;
+      if (done % 10 == 0 || done == imageHeight) {
+        #pragma omp critical
+        {
+          std::clog << "\rProgress: " << (100.0 * done / imageHeight) << "%" << std::flush;
+        }
       }
     }
     stbi_write_png(outputPath, imageWidth, imageHeight, 3, data.data(), imageWidth * 3);
@@ -86,9 +96,10 @@ public:
   void averageIntersections(const BVH &world) {
     initialize();
 
+    std::clog << "\n";
     int hits = 0;
     for (int j = 0; j < imageHeight; j++) {
-      std::clog << "\nScanlines remaining: " << imageHeight - j << " " << std::flush;
+      std::clog << "\rScanlines remaining: " << imageHeight - j << " " << std::flush;
       for (int i = 0; i < imageWidth; i++) {
         for (int s = 0; s < samplesPerPixel; s++) {
           ray r = getRay(i, j);
@@ -97,7 +108,7 @@ public:
       }
     }
     std::clog << "\rDone.                  \n";
-    std::clog << "Hits: " << hits << " " << std::flush;
+    std::clog << "\rHits: " << hits << " ";
     std::clog << "Average hits per pixel: " << static_cast<float>(hits) / static_cast<float>(imageWidth * imageHeight * samplesPerPixel) << std::flush;
   }
 
@@ -193,14 +204,11 @@ private:
     return color(0.0f);
   }
 
-  static color boxIntersections(const ray &r, const int depth, const BVH &world) {
+  static color boxIntersections(const ray &r, const int depth, const BVH &world, const float lowerLimit, const float upperLimit) {
     if (depth <= 0) return {0, 0, 0};
 
     hitRecord rec;
     const int hits = world.intersect(r, interval(0.001, infinity), rec);
-
-    constexpr float lowerLimit = 1;
-    constexpr float upperLimit = 2000;
 
     return glm::mix(color(0, 0, 0.5), color(1, 0, 0), (hits - lowerLimit) / (upperLimit - lowerLimit));
   }

@@ -18,16 +18,16 @@ public:
                           });
     }
 
-    void buildBoundingVolume(const int boxIndex, const int start, const int count) override {
+    void buildBoundingVolume(const size_t boxIndex, const int start, const int count) override {
         boundingVolume &box = boxes[boxIndex];
         box.start = start;
         box.isLeaf = true;
         buildFromTriangles(box, start, count);
     }
 
-    void divide(const int depth, const int parentIndex) override {
+    void divide(const int depth, const size_t parentIndex) override {
         if (depth <= 0) return;
-        
+
         if (boxes[parentIndex].count <= minTriangles) return;
 
         const int mid = findSplitIndex(boxes[parentIndex].start, boxes[parentIndex].count);

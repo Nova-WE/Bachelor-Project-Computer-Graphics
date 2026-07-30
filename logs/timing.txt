@@ -1,7 +1,7 @@
-Timing Log of: ../models/cityOcclusion.obj
+Timing Log of: ../models/dragon.obj
  
-SAH: Leaves=1019507 Internals=1019530 MaxDepth=30 LeafSizes=[1, 909]
-SAH build time: 96035 ms
-SAH render time: 1512717 ms
-Total time: 1608752 ms
+SAH: Leaves=83982 Internals=83981 MaxDepth=22 LeafSizes=[2, 15]
+SAH build time: 7190 ms
+SAH render time: 2414 ms
+Total time: 9604 ms
 

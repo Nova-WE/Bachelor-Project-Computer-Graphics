@@ -50,6 +50,10 @@ public:
         timingLog.close();
     }
 
+    void sampleTest(const char* modelPath, const camera &cam) const {
+        samplesTest(modelPath, cam);
+    }
+
 private:
     std::string outputImagePath;
 
@@ -74,8 +78,8 @@ private:
     static void printTreeStats(const BVH &bvh, const std::string &name, std::ofstream &log) {
         int leafCount = 0, internalCount = 0, maxDepth = 0, minLeafSize = INT_MAX, maxLeafSize = 0;
 
-        std::function<void(int, int)> traverse = [&](const int idx, const int depth) {
-            if (idx < 0 || idx >= static_cast<int>(bvh.boxes.size())) return;
+        std::function<void(int, int)> traverse = [&](const size_t idx, const int depth) {
+            if (idx >= bvh.boxes.size()) return;
             const auto &box = bvh.boxes[idx];
             if (box.count == 0) return;
 
@@ -97,11 +101,43 @@ private:
                 << ", " << maxLeafSize << "]\n";
     }
 
+    void samplesTest(const char *modelPath, camera cam) const {
+        std::ofstream timingLog("../logs/samplesTiming.txt");
+        const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
+
+        /*
+        SAH sah(model->getTriangles());
+        sah.numberOfBuckets = 12;
+        sah.build();
+        for (int i = 0; i < 6; i++) {
+            cam.samplesPerPixel = std::max(1, 5 * i);
+            const auto renderTime = timeFunction([&] { cam.render(sah, model->getLights(), (outputImagePath + "/SAH.png").c_str()); });
+            timingLog << "SAH render time with " << cam.samplesPerPixel << " samples: " << renderTime << " ms\n";
+        }
+        timingLog << "\n";
+*/
+        MedianSplit ms(model->getTriangles());
+        ms.build();
+        for (int i = 0; i < 6; i++) {
+            cam.samplesPerPixel = std::max(1, 5 * i);
+            const auto renderTime = timeFunction([&] { cam.render(ms, model->getLights(), (outputImagePath + "/Median.png").c_str()); });
+            timingLog << "Median Split render time with " << cam.samplesPerPixel << " samples: " << renderTime << " ms\n";
+        }
+        timingLog << "\n";
+/*
+        LBVH lbvh(model->getTriangles());
+        lbvh.build();
+        for (int i = 0; i < 6; i++) {
+            cam.samplesPerPixel = std::max(1, 5 * i);
+            const auto renderTime = timeFunction([&] { cam.render(lbvh, model->getLights(), (outputImagePath + "/LBVH.png").c_str()); });
+            timingLog << "LBVH render time with " << cam.samplesPerPixel << " samples: " << renderTime << " ms\n";
+        }
+        */
+    }
+
     static void buildMedianSplit(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, camera cam,
                           std::ofstream &timingLog, const char *output) {
         MedianSplit median_split(triangles);
-        median_split.maxDepth = 30;
-        median_split.minTriangles = 16;
 
         const auto buildTime = timeFunction([&] { median_split.build(); });
         printTreeStats(median_split, "Median Split", timingLog);
@@ -116,8 +152,6 @@ private:
     static void buildSAH(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, camera cam,
                   std::ofstream &timingLog, const char *output, const int numBuckets = 16, bool adaptiveBuckets = false) {
         SAH sah(triangles);
-        sah.maxDepth = 30;
-        sah.minTriangles = 16;
         sah.numberOfBuckets = numBuckets;
         sah.adaptiveBuckets = adaptiveBuckets;
 
@@ -134,8 +168,6 @@ private:
     static void buildLBVH(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, camera cam,
                    std::ofstream &timingLog, const char *output) {
         LBVH lbvh(triangles);
-        lbvh.maxDepth = 40;
-        lbvh.minTriangles = 16;
 
         const auto buildTime = timeFunction([&] { lbvh.build(); });
         printTreeStats(lbvh, "LBVH", timingLog);
@@ -167,10 +199,10 @@ public:
         std::filesystem::create_directory(outputHeatmapPath);
     };
 
-    void generate(const triangleModel &model, const camera &cam) const {
-        heatMapMedian(model.getTriangles(), cam, (outputHeatmapPath + "/Median.png").c_str());
-        heatMapSAH(model.getTriangles(), cam, (outputHeatmapPath + "/SAH.png").c_str());
-        heatMapLBVH(model.getTriangles(), cam, (outputHeatmapPath + "/LBVH.png").c_str());
+    void generate(const triangleModel &model, const camera &cam, const float lowerLimit, const float upperLimit) const {
+        heatMapMedian(model.getTriangles(), cam, (outputHeatmapPath + "/Median.png").c_str(), lowerLimit, upperLimit);
+        heatMapSAH(model.getTriangles(), cam, (outputHeatmapPath + "/SAH.png").c_str(), lowerLimit, upperLimit);
+        heatMapLBVH(model.getTriangles(), cam, (outputHeatmapPath + "/LBVH.png").c_str(), lowerLimit, upperLimit);
     }
 
     static void bucketTest(const triangleModel &model, camera cam) {
@@ -180,42 +212,34 @@ public:
 private:
     std::string outputHeatmapPath;
 
-    static void heatMapMedian(const std::vector<triangle> &triangles, camera cam, const char *output) {
+    static void heatMapMedian(const std::vector<triangle> &triangles, camera cam, const char *output, const float lowerLimit, const float upperLimit) {
         MedianSplit median_split(triangles);
-        median_split.maxDepth = 20;
-        median_split.minTriangles = 16;
 
         median_split.build();
-        cam.heatmap(median_split, output);
+        cam.heatmap(median_split, output, lowerLimit, upperLimit);
     }
 
-    static void heatMapSAH(const std::vector<triangle> &triangles, camera cam, const char *output) {
+    static void heatMapSAH(const std::vector<triangle> &triangles, camera cam, const char *output, const float lowerLimit, const float upperLimit) {
         SAH sah(triangles);
-        sah.maxDepth = 20;
-        sah.minTriangles = 16;
 
         sah.build();
-        cam.heatmap(sah, output);
+        cam.heatmap(sah, output, lowerLimit, upperLimit);
     }
 
-    static void heatMapLBVH(const std::vector<triangle> &triangles, camera cam, const char *output) {
+    static void heatMapLBVH(const std::vector<triangle> &triangles, camera cam, const char *output, const float lowerLimit, const float upperLimit) {
         LBVH lbvh(triangles);
-        lbvh.maxDepth = 20;
-        lbvh.minTriangles = 16;
 
         lbvh.build();
-        cam.heatmap(lbvh, output);
+        cam.heatmap(lbvh, output, lowerLimit, upperLimit);
     }
 
     static void heatmapBucketsTest(const std::vector<triangle> &triangles, camera &cam) {
         for (int i = 1; i <= 6; i++) {
             std::clog << i << std::endl;
             SAH sah(triangles);
-            sah.maxDepth = 20;
-            sah.minTriangles = 16;
             sah.numberOfBuckets = 1 << i;
             sah.build();
-            cam.heatmap(sah, ("../heatmaps/bucketsTest" + std::to_string(1 << i) + ".png").c_str());
+            cam.heatmap(sah, ("../heatmaps/bucketsTest" + std::to_string(1 << i) + ".png").c_str(), 1, 2000);
         }
     }
 };
@@ -233,8 +257,6 @@ public:
 private:
     static void averageIntersectMedianSplit(const std::vector<triangle> &triangles, camera cam) {
         MedianSplit median_split(triangles);
-        median_split.maxDepth = 20;
-        median_split.minTriangles = 16;
 
         median_split.build();
         cam.averageIntersections(median_split);
@@ -242,8 +264,6 @@ private:
 
     static void averageIntersectSAH(const std::vector<triangle> &triangles, camera cam) {
         SAH sah(triangles);
-        sah.maxDepth = 20;
-        sah.minTriangles = 16;
 
         sah.build();
         cam.averageIntersections(sah);
@@ -251,8 +271,6 @@ private:
 
     static void averageIntersectLBVH(const std::vector<triangle> &triangles, camera cam) {
         LBVH lbvh(triangles);
-        lbvh.maxDepth = 20;
-        lbvh.minTriangles = 16;
 
         lbvh.build();
         cam.averageIntersections(lbvh);
