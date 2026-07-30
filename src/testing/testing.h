@@ -50,8 +50,8 @@ public:
         timingLog.close();
     }
 
-    void sampleTest(const char* modelPath, const camera &cam) const {
-        samplesTest(modelPath, cam);
+    void sampleTest(const triangleModel &model, const camera &cam) const {
+        samplesTest(model, cam);
     }
 
 private:
@@ -101,38 +101,35 @@ private:
                 << ", " << maxLeafSize << "]\n";
     }
 
-    void samplesTest(const char *modelPath, camera cam) const {
+    void samplesTest(const triangleModel &model, camera cam) const {
         std::ofstream timingLog("../logs/samplesTiming.txt");
-        const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
 
-        /*
-        SAH sah(model->getTriangles());
+        SAH sah(model.getTriangles());
         sah.numberOfBuckets = 12;
         sah.build();
         for (int i = 0; i < 6; i++) {
             cam.samplesPerPixel = std::max(1, 5 * i);
-            const auto renderTime = timeFunction([&] { cam.render(sah, model->getLights(), (outputImagePath + "/SAH.png").c_str()); });
+            const auto renderTime = timeFunction([&] { cam.render(sah, model.getLights(), (outputImagePath + "/SAH.png").c_str()); });
             timingLog << "SAH render time with " << cam.samplesPerPixel << " samples: " << renderTime << " ms\n";
         }
         timingLog << "\n";
-*/
-        MedianSplit ms(model->getTriangles());
+
+        MedianSplit ms(model.getTriangles());
         ms.build();
         for (int i = 0; i < 6; i++) {
             cam.samplesPerPixel = std::max(1, 5 * i);
-            const auto renderTime = timeFunction([&] { cam.render(ms, model->getLights(), (outputImagePath + "/Median.png").c_str()); });
+            const auto renderTime = timeFunction([&] { cam.render(ms, model.getLights(), (outputImagePath + "/Median.png").c_str()); });
             timingLog << "Median Split render time with " << cam.samplesPerPixel << " samples: " << renderTime << " ms\n";
         }
         timingLog << "\n";
-/*
-        LBVH lbvh(model->getTriangles());
+
+        LBVH lbvh(model.getTriangles());
         lbvh.build();
         for (int i = 0; i < 6; i++) {
             cam.samplesPerPixel = std::max(1, 5 * i);
-            const auto renderTime = timeFunction([&] { cam.render(lbvh, model->getLights(), (outputImagePath + "/LBVH.png").c_str()); });
+            const auto renderTime = timeFunction([&] { cam.render(lbvh, model.getLights(), (outputImagePath + "/LBVH.png").c_str()); });
             timingLog << "LBVH render time with " << cam.samplesPerPixel << " samples: " << renderTime << " ms\n";
         }
-        */
     }
 
     static void buildMedianSplit(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, camera cam,

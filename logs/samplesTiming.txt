@@ -1,7 +1,20 @@
-Median Split render time with 1 samples: 2733 ms
-Median Split render time with 5 samples: 13426 ms
-Median Split render time with 10 samples: 28377 ms
-Median Split render time with 15 samples: 42823 ms
-Median Split render time with 20 samples: 59479 ms
-Median Split render time with 25 samples: 78737 ms
+SAH render time with 1 samples: 1183 ms
+SAH render time with 5 samples: 5551 ms
+SAH render time with 10 samples: 9745 ms
+SAH render time with 15 samples: 16510 ms
+SAH render time with 20 samples: 20477 ms
+SAH render time with 25 samples: 25944 ms
 
+Median Split render time with 1 samples: 1831 ms
+Median Split render time with 5 samples: 7315 ms
+Median Split render time with 10 samples: 17453 ms
+Median Split render time with 15 samples: 24543 ms
+Median Split render time with 20 samples: 33170 ms
+Median Split render time with 25 samples: 41815 ms
+
+LBVH render time with 1 samples: 1555 ms
+LBVH render time with 5 samples: 7509 ms
+LBVH render time with 10 samples: 14921 ms
+LBVH render time with 15 samples: 20885 ms
+LBVH render time with 20 samples: 28174 ms
+LBVH render time with 25 samples: 35632 ms
