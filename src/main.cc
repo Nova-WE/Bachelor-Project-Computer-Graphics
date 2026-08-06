@@ -19,19 +19,19 @@ int main() {
     cam.imageWidth = 1000;
     cam.samplesPerPixel = 1;
 
-    const auto modelPath = "../models/hairball.obj";
+    const auto modelPath = "../models/dragon.obj";
     const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
 
-    const Rendering r(modelPath);
+    //const Rendering r(modelPath);
     //r.render(modelPath, *model, cam);
     //r.fastRender(modelPath, *model, cam);
-    r.sampleTest(*model, cam);
+    //r.sampleTest(*model, cam);
 
     //Rendering::bucketTest(*model, cam);
 
     //generateHeatmap(modelPath, cam);
 
-    //averageTriangleIntersections::calculate(*model, cam);
+    averageTriangleIntersections::calculate(*model, cam);
 
     /*
     renderModel("../models/occlusionCubesLow.obj", cam);

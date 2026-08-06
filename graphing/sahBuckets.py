@@ -12,6 +12,9 @@ ax.scatter(buildTimes, renderTimes)
 for i, txt in enumerate(buckets):
     ax.annotate("  " + str(txt), (buildTimes[i], renderTimes[i]))
 
+plt.xlabel("build time")
+plt.ylabel("render time")
+
 ax.annotate("  dynamic", (buildTimes[-1], renderTimes[-1]))
 
 plt.show()
