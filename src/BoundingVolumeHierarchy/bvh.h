@@ -5,6 +5,8 @@
 #ifndef BACHELORPROJECT_BVH_H
 #define BACHELORPROJECT_BVH_H
 
+#include <stack>
+
 #include "../hittable.h"
 #include "../triangleModel.h"
 #include "boundingVolume.h"
@@ -34,7 +36,7 @@ public:
 
 
     bool hit(const ray &r, const interval ray_t, hitRecord &rec) const override {
-        return hitRecursive(r, ray_t, rec, 0);
+        return hitStack(r, ray_t, rec, 0);
     }
 
     int intersect(const ray &r, const interval ray_t, hitRecord &rec) const {
@@ -130,7 +132,7 @@ public:
     }
 
     bool hitTriangles(const ray &r, const interval ray_t, hitRecord &rec, const int start, const int count) const {
-        hitRecord tempRec;
+        hitRecord tempRec{};
         bool hitAnything = false;
         double closestSoFar = ray_t.max;
 
@@ -139,6 +141,69 @@ public:
                 hitAnything = true;
                 closestSoFar = tempRec.t;
                 rec = tempRec;
+            }
+        }
+        return hitAnything;
+    }
+
+    bool hitStack(const ray &r, const interval ray_t, hitRecord &rec, const int index) const {
+        if (index < 0 || index >= static_cast<int>(boxes.size())) return false;
+
+        bool hitAnything = false;
+        double closestSoFar = ray_t.max;
+        hitRecord tempRec{};
+
+        std::stack<int> nodeStack;
+        nodeStack.push(index);
+
+        while (!nodeStack.empty()) {
+            const int currentIndex = nodeStack.top();
+            nodeStack.pop();
+
+            if (currentIndex < 0 || currentIndex >= static_cast<int>(boxes.size())) continue;
+
+            const boundingVolume &box = boxes[currentIndex];
+
+            if (float hitDist; !box.hit(r, ray_t, tempRec, hitDist)) continue;
+
+            if (box.isLeaf) {
+                if (hitTriangles(r, interval(ray_t.min, closestSoFar), tempRec, box.start, box.count)) {
+                    hitAnything = true;
+                    closestSoFar = tempRec.t;
+                    rec = tempRec;
+                }
+                continue;
+            }
+
+            const int leftIndex = static_cast<int>(box.leftIndex);
+            const int rightIndex = static_cast<int>(box.rightIndex);
+
+            float leftDist = std::numeric_limits<float>::infinity();
+            float rightDist = std::numeric_limits<float>::infinity();
+
+            bool hitLeft = false;
+            bool hitRight = false;
+
+            if (leftIndex >= 0 && leftIndex < static_cast<int>(boxes.size())) {
+                hitLeft = boxes[leftIndex].hit(r, interval(ray_t.min, closestSoFar), tempRec, leftDist);
+            }
+
+            if (rightIndex >= 0 && rightIndex < static_cast<int>(boxes.size())) {
+                hitRight = boxes[rightIndex].hit(r, interval(ray_t.min, closestSoFar), tempRec, rightDist);
+            }
+
+            if (hitLeft && hitRight) {
+                if (leftDist < rightDist) {
+                    nodeStack.push(rightIndex);
+                    nodeStack.push(leftIndex);
+                } else {
+                    nodeStack.push(leftIndex);
+                    nodeStack.push(rightIndex);
+                }
+            } else if (hitLeft) {
+                nodeStack.push(leftIndex);
+            } else if (hitRight) {
+                nodeStack.push(rightIndex);
             }
         }
         return hitAnything;

@@ -1,7 +1,7 @@
-Timing Log of: ../models/city/city.obj
+Timing Log of: ../models/dragon.obj
  
-LBVH: Leaves=769279 Internals=769278 MaxDepth=30 LeafSizes=[1, 2228]
-LBVH Split build time: 12683 ms
-LBVH render time: 36371 ms
-Total time: 49054 ms
+LBVH: Leaves=90264 Internals=90263 MaxDepth=29 LeafSizes=[1, 16]
+LBVH Split build time: 790 ms
+LBVH render time: 3460 ms
+Total time: 4250 ms
 

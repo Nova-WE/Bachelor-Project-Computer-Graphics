@@ -19,7 +19,7 @@ int main() {
     cam.imageWidth = 1920;
     cam.samplesPerPixel = 1;
 
-    constexpr auto modelPath = "../models/city/city.obj";
+    constexpr auto modelPath = "../models/dragon.obj";
     const auto model = make_shared<triangleModel>(modelPath);
 
     const Rendering r(modelPath);
