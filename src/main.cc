@@ -4,7 +4,7 @@
 #include "testing/testing.h"
 
 void generateHeatmap(const char* modelPath, camera cam) {
-    const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
+    const auto model = make_shared<triangleModel>(modelPath);
     const Heatmap h(modelPath);
 
     constexpr float lowerLimit = 1;
@@ -16,22 +16,22 @@ void generateHeatmap(const char* modelPath, camera cam) {
 int main() {
     camera cam;
     // set view axis to -Y on export in Blender !!!!
-    cam.imageWidth = 1000;
+    cam.imageWidth = 1920;
     cam.samplesPerPixel = 1;
 
-    const auto modelPath = "../models/dragon.obj";
-    const auto model = make_shared<triangleModel>(modelPath, cam.lookFrom);
+    constexpr auto modelPath = "../models/city/city.obj";
+    const auto model = make_shared<triangleModel>(modelPath);
 
-    //const Rendering r(modelPath);
+    const Rendering r(modelPath);
     //r.render(modelPath, *model, cam);
-    //r.fastRender(modelPath, *model, cam);
+    r.fastRender(modelPath, *model, cam);
     //r.sampleTest(*model, cam);
 
     //Rendering::bucketTest(*model, cam);
 
     //generateHeatmap(modelPath, cam);
 
-    averageTriangleIntersections::calculate(*model, cam);
+    //averageTriangleIntersections::calculate(*model, cam);
 
     /*
     renderModel("../models/occlusionCubesLow.obj", cam);

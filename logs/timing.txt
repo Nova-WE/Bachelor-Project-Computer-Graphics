@@ -1,17 +1,7 @@
-Timing Log of: ../models/city.obj
+Timing Log of: ../models/city/city.obj
  
-Median Split: Leaves=1048576 Internals=1048575 MaxDepth=20 LeafSizes=[9, 10]
-Median Split build time: 33503 ms
-Median Split render time: 20609 ms
-Total time: 54112 ms
-
-SAH: Leaves=1019577 Internals=1019618 MaxDepth=30 LeafSizes=[1, 1061]
-SAH build time: 95935 ms
-SAH render time: 10861 ms
-Total time: 106796 ms
-
-LBVH: Leaves=771565 Internals=771564 MaxDepth=30 LeafSizes=[1, 1185]
-LBVH Split build time: 25996 ms
-LBVH render time: 11418 ms
-Total time: 37414 ms
+LBVH: Leaves=769279 Internals=769278 MaxDepth=30 LeafSizes=[1, 2228]
+LBVH Split build time: 12683 ms
+LBVH render time: 36371 ms
+Total time: 49054 ms
 

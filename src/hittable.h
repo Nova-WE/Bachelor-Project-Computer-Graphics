@@ -9,9 +9,11 @@ class hitRecord {
 public:
     glm::vec3 p;
     glm::vec3 normal;
-    shared_ptr<material> mat;
+    uint32_t matIndex;
     double t;
     bool frontFace;
+
+    glm::vec2 uv;
 
     void setFaceNormal(const ray &r, const glm::vec3 &outwardNormal) {
         // The outwardNormal is assumend to be of unit length

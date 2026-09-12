@@ -4,14 +4,97 @@
 #include "hittable.h"
 #include "tinyObjLoaderImpl.h"
 #include "rtweekend.h"
+#include "texture.h"
 
+
+enum class MaterialType : uint32_t {
+    PHONG = 0
+};
+
+struct Material {
+    MaterialType type;
+    color diffuse;
+    color specular;
+    color emission;
+    float shininess;
+
+    std::shared_ptr<Texture> diffuseTexture;
+    std::shared_ptr<Texture> normalTexture;
+};
+
+inline void loadMaterialDiffuseTexture(Material &mat, const std::string &texturePath) {
+    if (!texturePath.empty()) {
+        mat.diffuseTexture = std::make_shared<Texture>();
+        if (!mat.diffuseTexture->loadFromFile(texturePath)) {
+            std::cerr << "Failed to load texture: " << texturePath << std::flush;
+            mat.diffuseTexture.reset();
+        }
+    }
+}
+
+inline void loadMaterialNormalTexture(Material &mat, const std::string &texturePath) {
+    if (!texturePath.empty()) {
+        mat.normalTexture = std::make_shared<Texture>();
+        if (!mat.normalTexture->loadFromFile(texturePath)) {
+            std::cerr << "Failed to load normal texture: " << texturePath << std::flush;
+            mat.normalTexture.reset();
+        }
+    }
+}
+
+inline color getEmissionColor(const Material &mat) {
+    return mat.emission;
+}
+
+inline float specular(const glm::vec3 r, const float shininess, const glm::vec3 viewDirection) {
+    const float spec = glm::max(0.0f, glm::dot(r, viewDirection));
+    return glm::pow(spec, shininess);
+}
+
+inline bool scatterMaterial(const Material &mat,
+                            const hitRecord &rec,
+                            color &attenuation,
+                            ray &scattered,
+                            const color lightColor,
+                            const glm::vec3 lightCenter,
+                            const glm::vec3 cameraPosition) {
+    switch (mat.type) {
+        case MaterialType::PHONG: {
+            if (mat.emission != color(0.0f, 0.0f, 0.0f, 1.0f)) return true;
+
+            const auto lightDirection = glm::normalize(lightCenter - rec.p);
+            if (mat.normalTexture) {
+                const auto normal = mat.normalTexture->sample(rec.uv.x, rec.uv.y);
+                scattered = ray(rec.p, glm::reflect(-lightDirection, xyz(normal)));
+            } else {
+                scattered = ray(rec.p, glm::reflect(-lightDirection, rec.normal));
+            }
+            color diffuseComp = mat.diffuse;
+            if (mat.diffuseTexture) {
+                diffuseComp *= mat.diffuseTexture->sample(rec.uv.x, rec.uv.y);
+                if (diffuseComp.a == 0.0f) {
+                    return false;
+                }
+            }
+            const auto specularComp = specular(scattered.direction(), mat.shininess,
+                                               glm::normalize(cameraPosition - rec.p)) * mat.specular;
+            attenuation = (diffuseComp + specularComp) * lightColor;
+            return true;
+        }
+    }
+    return false;
+}
+
+/*
 class material {
 public:
     virtual ~material() = default;
+
     bool isEmissive = false;
 
     virtual bool scatter(const ray &r_in, const hitRecord &rec,
-                         color &attenuation, ray &scattered, const color lightColor, const glm::vec3 lightCenter) const {
+                         color &attenuation, ray &scattered, const color lightColor,
+                         const glm::vec3 lightCenter) const {
         return false;
     }
 
@@ -20,8 +103,7 @@ public:
 
 class phong : public material {
 public:
-
-    phong(const tinyobj::material_t &mat, glm::vec3 &cameraPosition)
+    phong(const tinyobj::material_t &mat, glm::vec3 &cameraPosition, const std::string &texturePath = "")
         : cameraPosition(cameraPosition) {
         // read ambient component, but discard for now
 
@@ -32,6 +114,19 @@ public:
 
         emissionColor = color(mat.emission[0], mat.emission[1], mat.emission[2]);
         isEmissive = emissionColor != color(0.0f);
+
+        if (!texturePath.empty()) {
+            texture = std::make_shared<Texture>();
+            if (texture->loadFromFile(texturePath)) {
+                hasTexture = true;
+            } else {
+                std::cerr << "Failed to load texture: " << texturePath << std::flush;
+                hasTexture = false;
+                texture.reset();
+            }
+        } else {
+            hasTexture = false;
+        }
     }
 
     bool scatter(const ray &r_in, const hitRecord &rec, color &attenuation, ray &scattered,
@@ -40,9 +135,11 @@ public:
         if (isEmissive) return true;
 
         const auto lightDirection = glm::normalize(lightCenter - rec.p);
-
         scattered = ray(rec.p, glm::reflect(-lightDirection, rec.normal));
-        const auto diffuseComp = diffuseColor;
+
+        color diffuseComp = diffuseColor;
+
+
         const auto specularComp = specular(scattered.direction(), glm::normalize(cameraPosition - rec.p)) *
                                   specularColor;
         attenuation = ambientColor + (diffuseComp + specularComp) * lightColor;
@@ -61,11 +158,17 @@ private:
     float specularSize;
     color emissionColor{};
 
+    std::shared_ptr<Texture> texture;
+    bool hasTexture;
+
+
     [[nodiscard]] float specular(const glm::vec3 r, const glm::vec3 viewDirection) const {
         const float spec = glm::max(0.0f, glm::dot(r, viewDirection));
         return glm::pow(spec, specularSize);
     }
 };
+*/
+
 
 /*
 class lambertian : public material {

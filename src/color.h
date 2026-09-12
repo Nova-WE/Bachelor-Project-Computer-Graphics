@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include "interval.h"
 
-using color = glm::vec3;
+using color = glm::vec4;
 
 inline double linearToGamma(const double linear_t) {
     return linear_t > 0 ? sqrt(linear_t) : 0;

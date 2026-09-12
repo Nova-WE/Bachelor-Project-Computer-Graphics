@@ -30,22 +30,22 @@ public:
         std::ofstream timingLog("../logs/timing.txt");
         timingLog << "Timing Log of: " << modelPath << "\n \n";
 
-        buildMedianSplit(model.getTriangles(), model.getLights(), cam, timingLog, (outputImagePath + "/Median.png").c_str());
-        buildSAH(model.getTriangles(), model.getLights(), cam, timingLog, (outputImagePath + "/SAH.png").c_str());
-        buildLBVH(model.getTriangles(), model.getLights(), cam, timingLog, (outputImagePath + "/LBVH.png").c_str());
+        buildMedianSplit(model.getTriangles(), model.getLights(), model.getMaterials(), cam, timingLog, (outputImagePath + "/Median.png").c_str());
+        buildSAH(model.getTriangles(), model.getLights(), model.getMaterials(), cam, timingLog, (outputImagePath + "/SAH.png").c_str());
+        buildLBVH(model.getTriangles(), model.getLights(), model.getMaterials(), cam, timingLog, (outputImagePath + "/LBVH.png").c_str());
 
         timingLog.close();
     }
 
     static void bucketTest(const triangleModel &model, const camera &cam) {
-        bucketsTest(model.getTriangles(), model.getLights(), cam);
+        bucketsTest(model.getTriangles(), model.getLights(), model.getMaterials(), cam);
     }
 
     void fastRender(const char *modelPath, const triangleModel &model, const camera &cam) const {
         std::ofstream timingLog("../logs/timing.txt");
         timingLog << "Timing Log of: " << modelPath << "\n \n";
 
-        buildSAH(model.getTriangles(), model.getLights(), cam, timingLog, (outputImagePath + "/SAH.png").c_str());
+        buildLBVH(model.getTriangles(), model.getLights(), model.getMaterials(), cam, timingLog, (outputImagePath + "/LBVH.png").c_str());
 
         timingLog.close();
     }
@@ -109,7 +109,7 @@ private:
         sah.build();
         for (int i = 0; i < 6; i++) {
             cam.samplesPerPixel = std::max(1, 5 * i);
-            const auto renderTime = timeFunction([&] { cam.render(sah, model.getLights(), (outputImagePath + "/SAH.png").c_str()); });
+            const auto renderTime = timeFunction([&] { cam.render(sah, model.getLights(), model.getMaterials(), (outputImagePath + "/SAH.png").c_str()); });
             timingLog << "SAH render time with " << cam.samplesPerPixel << " samples: " << renderTime << " ms\n";
         }
         timingLog << "\n";
@@ -118,7 +118,7 @@ private:
         ms.build();
         for (int i = 0; i < 6; i++) {
             cam.samplesPerPixel = std::max(1, 5 * i);
-            const auto renderTime = timeFunction([&] { cam.render(ms, model.getLights(), (outputImagePath + "/Median.png").c_str()); });
+            const auto renderTime = timeFunction([&] { cam.render(ms, model.getLights(), model.getMaterials(), (outputImagePath + "/Median.png").c_str()); });
             timingLog << "Median Split render time with " << cam.samplesPerPixel << " samples: " << renderTime << " ms\n";
         }
         timingLog << "\n";
@@ -127,18 +127,18 @@ private:
         lbvh.build();
         for (int i = 0; i < 6; i++) {
             cam.samplesPerPixel = std::max(1, 5 * i);
-            const auto renderTime = timeFunction([&] { cam.render(lbvh, model.getLights(), (outputImagePath + "/LBVH.png").c_str()); });
+            const auto renderTime = timeFunction([&] { cam.render(lbvh, model.getLights(), model.getMaterials(), (outputImagePath + "/LBVH.png").c_str()); });
             timingLog << "LBVH render time with " << cam.samplesPerPixel << " samples: " << renderTime << " ms\n";
         }
     }
 
-    static void buildMedianSplit(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, camera cam,
+    static void buildMedianSplit(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, const std::vector<Material> &materials, camera cam,
                           std::ofstream &timingLog, const char *output) {
         MedianSplit median_split(triangles);
 
         const auto buildTime = timeFunction([&] { median_split.build(); });
         printTreeStats(median_split, "Median Split", timingLog);
-        const auto renderTime = timeFunction([&] { cam.render(median_split, lights, output); });
+        const auto renderTime = timeFunction([&] { cam.render(median_split, lights, materials, output); });
 
         timingLog << "Median Split build time: " << buildTime << " ms\n";
         timingLog << "Median Split render time: " << renderTime << " ms\n";
@@ -146,7 +146,7 @@ private:
         timingLog << "\n";
     }
 
-    static void buildSAH(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, camera cam,
+    static void buildSAH(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, const std::vector<Material> &materials, camera cam,
                   std::ofstream &timingLog, const char *output, const int numBuckets = 16, bool adaptiveBuckets = false) {
         SAH sah(triangles);
         sah.numberOfBuckets = numBuckets;
@@ -154,7 +154,7 @@ private:
 
         const auto buildTime = timeFunction([&] { sah.build(); });
         printTreeStats(sah, "SAH", timingLog);
-        const auto renderTime = timeFunction([&] { cam.render(sah, lights, output); });
+        const auto renderTime = timeFunction([&] { cam.render(sah, lights, materials, output); });
 
         timingLog << "SAH build time: " << buildTime << " ms\n";
         timingLog << "SAH render time: " << renderTime << " ms\n";
@@ -162,13 +162,13 @@ private:
         timingLog << "\n";
     }
 
-    static void buildLBVH(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, camera cam,
+    static void buildLBVH(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, const std::vector<Material> &materials, camera cam,
                    std::ofstream &timingLog, const char *output) {
         LBVH lbvh(triangles);
 
         const auto buildTime = timeFunction([&] { lbvh.build(); });
         printTreeStats(lbvh, "LBVH", timingLog);
-        const auto renderTime = timeFunction([&] { cam.render(lbvh, lights, output); });
+        const auto renderTime = timeFunction([&] { cam.render(lbvh, lights, materials, output); });
 
 
         timingLog << "LBVH Split build time: " << buildTime << " ms\n";
@@ -178,13 +178,15 @@ private:
     }
 
 
-    static void bucketsTest(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, const camera &cam) {
+
+
+    static void bucketsTest(const std::vector<triangle> &triangles, const std::vector<triangle> &lights, const std::vector<Material> &materials, const camera &cam) {
         std::ofstream timingLog2("../logs/bucketsTestPowerOfTwo.txt");
         for (int i = 1; i <= 6; i++) {
             std::clog << i << std::endl;
-            buildSAH(triangles, lights, cam, timingLog2, "../images/bucketsTest.png", 1 << i);
+            buildSAH(triangles, lights, materials, cam, timingLog2, "../images/bucketsTest.png", 1 << i);
         }
-        buildSAH(triangles, lights, cam, timingLog2, "../images/bucketsTest.png", 16, true);
+        buildSAH(triangles, lights, materials, cam, timingLog2, "../images/bucketsTest.png", 16, true);
         timingLog2.close();
     }
 };

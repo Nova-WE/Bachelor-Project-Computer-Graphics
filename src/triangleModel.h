@@ -2,6 +2,7 @@
 #define TRIANGLEMODEL_H
 
 #include <bitset>
+#include <filesystem>
 #include <utility>
 #include "material.h"
 #include "hittable.h"
@@ -11,7 +12,7 @@
 struct vertex {
     glm::vec3 position;
     glm::vec3 normal;
-    float uv[2];
+    glm::vec2 uv;
 };
 
 class triangle : public hittable {
@@ -23,7 +24,7 @@ public:
     glm::vec3 Max{};
     glm::u64 mortonCode{};
 
-    shared_ptr<material> mat;
+    uint32_t matIndex{};
 
     triangle() {
         vertices[0] = vertex{};
@@ -38,8 +39,8 @@ public:
         mortonCode = 0;
     }
 
-    triangle(vertex v0, vertex v1, vertex v2, glm::vec3 normal, shared_ptr<material> mat)
-        : normal(normal), mat(std::move(mat)) {
+    triangle(vertex v0, vertex v1, vertex v2, glm::vec3 normal, uint32_t matIndex)
+        : normal(normal), matIndex(matIndex) {
         vertices[0] = v0;
         vertices[1] = v1;
         vertices[2] = v2;
@@ -50,7 +51,7 @@ public:
         center = (v0.position + v1.position + v2.position) / 3.0f;
     }
 
-    bool hit(const ray &r, interval ray_t, hitRecord &rec) const override {
+    bool hit(const ray &r, const interval ray_t, hitRecord &rec) const override {
         // return false if ray is parallel to triangle
         if (dot(r.direction(), normal) == 0) {
             return false;
@@ -61,18 +62,18 @@ public:
         }
         constexpr double epsilon = std::numeric_limits<double>::epsilon();
 
-        glm::vec3 e1 = vertices[1].position - vertices[0].position;
-        glm::vec3 e2 = vertices[2].position - vertices[0].position;
+        const glm::vec3 e1 = vertices[1].position - vertices[0].position;
+        const glm::vec3 e2 = vertices[2].position - vertices[0].position;
 
-        glm::vec3 rayCrossE2 = cross(r.direction(), e2);
-        double det = dot(e1, rayCrossE2);
+        const glm::vec3 rayCrossE2 = cross(r.direction(), e2);
+        const double det = dot(e1, rayCrossE2);
 
         // ray is parallel to triangle plane
         if (std::abs(det) < epsilon) {
             return false;
         }
 
-        double invDet = 1.0 / det;
+        const double invDet = 1.0 / det;
         glm::vec3 s = r.origin() - vertices[0].position;
 
         double u = invDet * dot(s, rayCrossE2);
@@ -81,8 +82,8 @@ public:
         if (u < -epsilon || u > 1.0 + epsilon) {
             return false;
         }
-        glm::vec3 sCrossE1 = cross(s, e1);
-        double v = invDet * glm::dot(r.direction(), sCrossE1);
+        const glm::vec3 sCrossE1 = cross(s, e1);
+        const double v = invDet * glm::dot(r.direction(), sCrossE1);
 
         // ray passes outside of edge3
         if (v < -epsilon || u + v > 1.0 + epsilon) {
@@ -96,11 +97,21 @@ public:
             rec.t = t;
             rec.p = r.at(rec.t);
             rec.setFaceNormal(r, normal);
-            rec.mat = mat;
+
+            // interpolate uv using barycentric coordinates
+            const auto w0 = static_cast<float>(1.0 - u - v);
+            const auto w1 = static_cast<float>(u);
+            const auto w2 = static_cast<float>(v);
+
+            rec.uv = glm::vec2(
+                w0 * vertices[0].uv.x + w1 * vertices[1].uv.x + w2 * vertices[2].uv.x,
+                w0 * vertices[0].uv.y + w1 * vertices[1].uv.y + w2 * vertices[2].uv.y
+            );
+
+            rec.matIndex = matIndex;
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 };
 
@@ -110,49 +121,102 @@ public:
     glm::vec3 Max{};
     MortonCode codeGenerator{Min, Max};
 
-    triangleModel(const char *filename, glm::vec3 &cameraPosition) {
+    explicit triangleModel(const char *filename) {
         Min = glm::vec3(std::numeric_limits<float>::max());
         Max = glm::vec3(-std::numeric_limits<float>::max());
 
+        const std::string modelDir = std::filesystem::path(filename).parent_path().string();
         // reads the .obj file using tinyObjLoader
         std::string warn, err;
-        bool success = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
-                                        filename, "../models", true);
+        bool success = tinyobj::LoadObj(&attrib, &shapes, &material_data, &warn, &err,
+                                        filename, modelDir.c_str(), true);
 
         if (!success) {
             std::cout << err << std::endl;
             return;
         }
         // converts the obj data into triangles
+        std::unordered_map<int, uint32_t> tinyMatIdToIndex;
+
         for (const auto &shape: shapes) {
             int counter = 3;
+            int faceIndex = 0;
             std::vector<vertex> vertices;
-            for (const auto &index: shape.mesh.indices) {
+            for (const auto &[vertex_index, normal_index, texcoord_index]: shape.mesh.indices) {
                 counter--;
 
                 vertex vert{};
 
-                auto i_vert = 3 * index.vertex_index;
+                auto i_vert = 3 * vertex_index;
                 vert.position =
                         glm::vec3(attrib.vertices[i_vert], attrib.vertices[i_vert + 1],
                                   attrib.vertices[i_vert + 2]);
 
-                if (index.normal_index >= 0) {
-                    auto i_norm = 3 * index.normal_index;
+                if (texcoord_index >= 0) {
+                    auto i_tex = 2 * texcoord_index;
+                    vert.uv = glm::vec2(attrib.texcoords[i_tex], attrib.texcoords[i_tex + 1]);
+                } else {
+                    vert.uv = glm::vec2(0.0f);
+                }
+
+                if (normal_index >= 0) {
+                    auto i_norm = 3 * normal_index;
                     vert.normal = glm::vec3(attrib.normals[i_norm], attrib.normals[i_norm + 1],
                                             attrib.normals[i_norm + 2]);
                 }
                 vertices.push_back(vert);
 
+
                 if (counter == 0) {
                     counter = 3;
+
+                    int tinyMatId = -1;
+                    if (faceIndex < static_cast<int>(shape.mesh.material_ids.size())) {
+                        tinyMatId = shape.mesh.material_ids[faceIndex];
+                    }
+                    faceIndex++;
+
+                    uint32_t matIndex;
+                    auto it = tinyMatIdToIndex.find(tinyMatId);
+                    if (it != tinyMatIdToIndex.end()) {
+                        matIndex = it->second;
+                    } else {
+                        Material mat{};
+                        mat.type = MaterialType::PHONG;
+
+                        if (tinyMatId >= 0 && tinyMatId < static_cast<int>(material_data.size())) {
+                            const auto &tinyMat = material_data[tinyMatId];
+                            mat.diffuse = color(tinyMat.diffuse[0], tinyMat.diffuse[1], tinyMat.diffuse[2], 1.0f);
+                            mat.specular = color(tinyMat.specular[0], tinyMat.specular[1], tinyMat.specular[2], 1.0f);
+                            mat.emission = color(tinyMat.emission[0], tinyMat.emission[1], tinyMat.emission[2], 1.0f);
+                            mat.shininess = tinyMat.shininess;
+                            std::string diffuseTexturePath;
+                            if (!tinyMat.diffuse_texname.empty()) {
+                                diffuseTexturePath = modelDir + "/" + tinyMat.diffuse_texname;
+                            }
+                            loadMaterialDiffuseTexture(mat, diffuseTexturePath);
+
+                            std::string normalTexturePath;
+                            if (!tinyMat.normal_texname.empty()) {
+                                normalTexturePath = modelDir + "/" + tinyMat.normal_texname;
+                            }
+                            loadMaterialNormalTexture(mat, normalTexturePath);
+                        } else {
+                            mat.diffuse = color(0.8f, 0.8f, 0.8f, 1.0f);
+                            mat.specular = color(0.5f, 0.5f, 0.5f, 1.0f);
+                            mat.emission = color(0.0f, 0.0f, 0.0f, 1.0f);
+                            mat.shininess = 32.0f;
+                        }
+
+                        materials.push_back(mat);
+                        matIndex = static_cast<uint32_t>(materials.size() - 1);
+                        tinyMatIdToIndex.emplace(tinyMatId, matIndex);
+                    }
+
                     glm::vec3 normal = vertices[0].normal;
+                    const auto tri = triangle(vertices[0], vertices[1], vertices[2], normal, matIndex);
 
-                    auto mat = make_shared<phong>(materials[shape.mesh.material_ids[0]], cameraPosition);
-
-                    const auto tri = triangle(vertices[0], vertices[1], vertices[2], normal, mat);
-
-                    if (tri.mat->isEmissive) {
+                    if (materials[matIndex].emission != color(0.0f, 0.0f, 0.0f, 1.0f)) {
                         lights.push_back(tri);
                     } else {
                         Min = glm::min(Min, tri.Min);
@@ -172,10 +236,11 @@ public:
         if (!err.empty()) std::cout << "tinyobj err: " << err << "\n";
         std::cout << "Loaded triangles: " << triangles.size() << "\n";
         std::cout << "Loaded lights: " << lights.size() << "\n";
+        std::cout << "Loaded materials: " << materials.size() << "\n";
     }
 
     bool hit(const ray &r, const interval ray_t, hitRecord &rec) const override {
-        hitRecord tempRec;
+        hitRecord tempRec{};
         bool hitAnything = false;
         double closestSoFar = ray_t.max;
 
@@ -195,21 +260,26 @@ public:
         }
     }
 
-    [[nodiscard]] const std::vector<triangle>& getTriangles() const {
+    [[nodiscard]] const std::vector<triangle> &getTriangles() const {
         return triangles;
     }
 
-    [[nodiscard]] const std::vector<triangle>& getLights() const {
+    [[nodiscard]] const std::vector<triangle> &getLights() const {
         return lights;
+    }
+
+    [[nodiscard]] const std::vector<Material> &getMaterials() const {
+        return materials;
     }
 
 private:
     std::vector<triangle> triangles;
     std::vector<triangle> lights;
+    std::vector<Material> materials;
 
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
+    std::vector<tinyobj::material_t> material_data;
 };
 
 #endif
