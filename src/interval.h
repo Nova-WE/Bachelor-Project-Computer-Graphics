@@ -9,7 +9,7 @@ public:
     interval() : min(+infinity), max(-infinity) {
     }
 
-    interval(double min, double max) : min(min), max(max) {
+    interval(const double min, const double max) : min(min), max(max) {
     }
 
     [[nodiscard]] double size() const {

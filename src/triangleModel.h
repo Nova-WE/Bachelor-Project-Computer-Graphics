@@ -74,9 +74,9 @@ public:
         }
 
         const double invDet = 1.0 / det;
-        glm::vec3 s = r.origin() - vertices[0].position;
+        const glm::vec3 s = r.origin() - vertices[0].position;
 
-        double u = invDet * dot(s, rayCrossE2);
+        const double u = invDet * dot(s, rayCrossE2);
 
         // ray passes outside of edge2
         if (u < -epsilon || u > 1.0 + epsilon) {

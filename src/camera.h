@@ -115,7 +115,6 @@ public:
 private:
     int imageHeight = 0;
     float pixelSampleScale = 0.0f;
-    glm::vec3 center;
     glm::vec3 pixel00pos;
     glm::vec3 pixelDelta_u;
     glm::vec3 pixelDelta_v;
@@ -127,14 +126,12 @@ private:
         imageHeight = int(imageWidth / aspectRatio);
         imageHeight = (imageHeight < 1) ? 1 : imageHeight;
 
-        center = lookFrom;
-
         pixelSampleScale = 1.0 / samplesPerPixel;
 
         const float theta = degreesToRadians(vFov);
         const float h = glm::tan(theta / 2.0);
         const float viewportHeight = 2.0f * h * focusDist;
-        const float viewportWidth = viewportHeight * (static_cast<double>(imageWidth) / imageHeight);
+        const float viewportWidth = viewportHeight * aspectRatio;
 
         w = glm::normalize(lookFrom - lookAt);
         u = glm::normalize(cross(vUp, w));
@@ -150,7 +147,7 @@ private:
 
         // Calculate top-left Pixel position
         const glm::vec3 viewportTopLeftCorner =
-                center - (focusDist * w) - viewport_u / 2.0f - viewport_v / 2.0f;
+                lookFrom - (focusDist * w) - viewport_u / 2.0f - viewport_v / 2.0f;
         pixel00pos = viewportTopLeftCorner + 0.5f * (pixelDelta_u + pixelDelta_v);
 
         // Calculate the camera Defocus
@@ -165,7 +162,7 @@ private:
         const auto pixelSample = pixel00pos + (static_cast<float>(i) + offset.x) * pixelDelta_u + (
                                      static_cast<float>(j) + offset.y) * pixelDelta_v;
 
-        const auto rayOrigin = (defocusAngle <= 0) ? center : defocusDiskSample();
+        const auto rayOrigin = (defocusAngle <= 0) ? lookFrom : defocusDiskSample();
         const auto rayDirection = pixelSample - rayOrigin;
 
         return {rayOrigin, rayDirection};
@@ -176,8 +173,8 @@ private:
     }
 
     [[nodiscard]] glm::vec3 defocusDiskSample() const {
-        auto p = randomOnUnitDisk();
-        return center + (p[0] * defocusDisk_u) + (p[1] * defocusDisk_v);
+        const auto p = randomOnUnitDisk();
+        return lookFrom + (p[0] * defocusDisk_u) + (p[1] * defocusDisk_v);
     }
 
     [[nodiscard]] color rayColor(const ray &r, const int depth, const hittable &world, const std::vector<triangle> &lights,

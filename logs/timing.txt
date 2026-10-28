@@ -1,7 +1,7 @@
 Timing Log of: ../models/dragon.obj
  
 LBVH: Leaves=90264 Internals=90263 MaxDepth=29 LeafSizes=[1, 16]
-LBVH Split build time: 790 ms
-LBVH render time: 3460 ms
-Total time: 4250 ms
+LBVH Split build time: 836 ms
+LBVH render time: 3552 ms
+Total time: 4388 ms
 
