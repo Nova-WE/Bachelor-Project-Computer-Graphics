@@ -248,7 +248,7 @@ private:
         if (hitRecord rec{}; world.hit(r, interval(0.001, infinity), rec)) {
             color lighting = materials[rec.matIndex].emission;
             for (int i = 0; i < samples; i++) {
-                const auto scattered = ray(rec.p, uniformHemisphereSample());
+                const auto scattered = ray(rec.p, cosineWeightedHemisphereSample());
                 if (color attenuation; BRDF_ds(materials[rec.matIndex], rec, attenuation, r, scattered)) {
                     lighting += attenuation * rayColorRecursive(scattered, depth - 1, world, materials, samples) * glm::max(0.0f, glm::dot(rec.normal, glm::normalize(scattered.direction())));
                 }

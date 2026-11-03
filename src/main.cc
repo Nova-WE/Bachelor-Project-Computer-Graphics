@@ -16,19 +16,19 @@ void generateHeatmap(const char* modelPath, camera cam) {
 int main() {
     camera cam;
     // set view axis to -Y on export in Blender !!!!
-    cam.imageWidth = 1920;
+    cam.imageWidth = 1000;
     cam.samplesPerPixel = 1;
-    cam.aspectRatio = 16.0f / 9.0f;
-    cam.vFov = 23.0;
+    cam.aspectRatio = 1.0f;
+    cam.vFov = 40.0f;
     cam.maxDepth = 5;
-    cam.samplesPerBounce = 5;
+    cam.samplesPerBounce = 10;
 
-    constexpr auto modelPath = "../models/dragonGI.obj";
+    constexpr auto modelPath = "../models/CornellBox.obj";
     const auto model = make_shared<triangleModel>(modelPath);
 
     const Rendering r(modelPath);
     //r.render(modelPath, *model, cam);
-    r.fastRender(modelPath, *model, cam, "/Uniform.png");
+    r.fastRender(modelPath, *model, cam, "/Cosine.png");
     //r.sampleTest(*model, cam);
 
     //Rendering::bucketTest(*model, cam);

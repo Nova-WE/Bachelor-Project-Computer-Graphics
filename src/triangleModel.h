@@ -3,6 +3,7 @@
 
 #include <bitset>
 #include <filesystem>
+#include <unordered_map>
 #include <utility>
 #include "material.h"
 #include "hittable.h"

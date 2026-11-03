@@ -5,6 +5,7 @@
 #include "tinyObjLoaderImpl.h"
 #include "rtweekend.h"
 #include "texture.h"
+#include <glm/gtx/vec_swizzle.hpp>
 
 
 enum class MaterialType : uint32_t {

@@ -1,0 +1,7 @@
+Timing Log of: ../models/CornellBox.obj
+ 
+SAH: Leaves=4 Internals=3 MaxDepth=3 LeafSizes=[4, 12]
+SAH build time: 0 ms
+SAH render time: 271974 ms
+Total time: 271974 ms
+
