@@ -259,7 +259,6 @@ private:
 
         median_split.build();
         cam.averageIntersections(median_split);
-        printTreeStats(median_split, "Median Split");
     }
 
     static void averageIntersectSAH(const std::vector<triangle> &triangles, camera cam) {
@@ -267,7 +266,6 @@ private:
 
         sah.build();
         cam.averageIntersections(sah);
-        printTreeStats(sah, "SAH");
     }
 
     static void averageIntersectLBVH(const std::vector<triangle> &triangles, camera cam) {
@@ -275,34 +273,6 @@ private:
 
         lbvh.build();
         cam.averageIntersections(lbvh);
-        printTreeStats(lbvh, "LBVH");
-    }
-
-
-    static void printTreeStats(const BVH &bvh, const std::string &name) {
-        int leafCount = 0, internalCount = 0, maxDepth = 0, minLeafSize = INT_MAX, maxLeafSize = 0;
-
-        std::function<void(int, int)> traverse = [&](const size_t idx, const int depth) {
-            if (idx >= bvh.boxes.size()) return;
-            const auto &box = bvh.boxes[idx];
-            if (box.count == 0) return;
-
-            maxDepth = std::max(maxDepth, depth);
-            if (box.isLeaf) {
-                leafCount++;
-                minLeafSize = std::min(minLeafSize, box.count);
-                maxLeafSize = std::max(maxLeafSize, box.count);
-            } else {
-                internalCount++;
-                traverse(box.leftIndex, depth + 1);
-                traverse(box.rightIndex, depth + 1);
-            }
-        };
-        traverse(0, 0);
-
-        std::cout << name << ": Leaves=" << leafCount << " Internals=" << internalCount
-                << " MaxDepth=" << maxDepth << " LeafSizes=[" << minLeafSize
-                << ", " << maxLeafSize << "]" << std::endl;
     }
 };
 
