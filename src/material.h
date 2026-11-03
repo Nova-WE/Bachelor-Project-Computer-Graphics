@@ -51,6 +51,14 @@ inline float specular(const glm::vec3 r, const float shininess, const glm::vec3 
     return glm::pow(spec, shininess);
 }
 
+inline color getDiffuseColor(const Material &mat, const hitRecord &rec) {
+    color diffuseComp = mat.diffuse;
+    if (mat.diffuseTexture) {
+        diffuseComp *= mat.diffuseTexture->sample(rec.uv.x, rec.uv.y);
+    }
+    return diffuseComp;
+}
+
 inline bool scatterMaterial(const Material &mat,
                             const hitRecord &rec,
                             color &attenuation,
@@ -69,16 +77,30 @@ inline bool scatterMaterial(const Material &mat,
             } else {
                 scattered = ray(rec.p, glm::reflect(-lightDirection, rec.normal));
             }
-            color diffuseComp = mat.diffuse;
-            if (mat.diffuseTexture) {
-                diffuseComp *= mat.diffuseTexture->sample(rec.uv.x, rec.uv.y);
-                if (diffuseComp.a == 0.0f) {
-                    return false;
-                }
+            color diffuseComp = getDiffuseColor(mat, rec);
+            if (diffuseComp.a == 0.0f) {
+                return false; // fully transparent, no scattering
             }
             const auto specularComp = specular(scattered.direction(), mat.shininess,
                                                glm::normalize(cameraPosition - rec.p)) * mat.specular;
             attenuation = (diffuseComp + specularComp) * lightColor;
+            return true;
+        }
+    }
+    return false;
+}
+
+inline bool BRDF_ds(const Material &mat, const hitRecord &rec, color &attenuation, const ray &outRay, const ray &inRay) {
+    switch (mat.type) {
+        case MaterialType::PHONG: {
+            const glm::vec3 omega_o = glm::normalize(inRay.direction());
+            const glm::vec3 omega_i = glm::normalize(outRay.direction());
+            const color diffuseComp = mat.diffuse / pi;
+            const glm::vec3 spec1 = 2 * glm::dot(rec.normal, omega_o) * rec.normal - omega_o;
+            const float spec2 = glm::max(0.0f, glm::dot(spec1, omega_i));
+            const color specularComp = mat.specular * glm::pow(spec2, mat.shininess);
+
+            attenuation = diffuseComp + specularComp;
             return true;
         }
     }

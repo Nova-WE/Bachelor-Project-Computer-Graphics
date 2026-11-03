@@ -18,13 +18,17 @@ int main() {
     // set view axis to -Y on export in Blender !!!!
     cam.imageWidth = 1920;
     cam.samplesPerPixel = 1;
+    cam.aspectRatio = 16.0f / 9.0f;
+    cam.vFov = 23.0;
+    cam.maxDepth = 5;
+    cam.samplesPerBounce = 5;
 
-    constexpr auto modelPath = "../models/dragon.obj";
+    constexpr auto modelPath = "../models/dragonGI.obj";
     const auto model = make_shared<triangleModel>(modelPath);
 
     const Rendering r(modelPath);
     //r.render(modelPath, *model, cam);
-    r.fastRender(modelPath, *model, cam);
+    r.fastRender(modelPath, *model, cam, "/Uniform.png");
     //r.sampleTest(*model, cam);
 
     //Rendering::bucketTest(*model, cam);

@@ -18,6 +18,7 @@ public:
     double aspectRatio = 16.0 / 9.0;
     int imageWidth = 100;
     int samplesPerPixel = 1;
+    int samplesPerBounce = 1;
     int maxDepth = 20;
 
     double vFov = 23.0;
@@ -45,7 +46,7 @@ public:
                 color pixelColor(0, 0, 0, 1);
                 for (int sample = 0; sample < samplesPerPixel; sample++) {
                     ray r = getRay(i, j);
-                    pixelColor += rayColor(r, maxDepth, world, lights, materials);
+                    pixelColor += rayColorRecursive(r, maxDepth, world, materials, samplesPerBounce);
                 }
                 const int index = (j * imageWidth + i) * 3;
                 write_color(data, index, pixelColor * pixelSampleScale);
@@ -210,6 +211,51 @@ private:
             return lighting / static_cast<float>(lights.size());
         }
         return {0.0f, 0.0f, 0.0f, 1.0f};
+    }
+
+    static glm::vec3 uniformHemisphereSample() {
+        // generate 2 uniform random numbers in [0, 1)
+        const double eta_1 = rand() / (RAND_MAX + 1.0);
+        const double eta_2 = rand() / (RAND_MAX + 1.0);
+
+        const double theta = glm::acos(1 - eta_1);
+        const double phi = 2 * pi * eta_2;
+
+        const double x = glm::sin(theta) * glm::cos(phi);
+        const double y = glm::sin(theta) * glm::sin(phi);
+        const double z = glm::cos(theta);
+
+        return {x, y, z};
+    }
+
+    static glm::vec3 cosineWeightedHemisphereSample() {
+        const double eta_1 = rand() / (RAND_MAX + 1.0);
+        const double eta_2 = rand() / (RAND_MAX + 1.0);
+
+        const double phi = 2 * pi * eta_2;
+
+        const double x = cos(phi) * sqrt(eta_1);
+        const double y = sin(phi) * sqrt(eta_1);
+        const double z = sqrt(1 - eta_1);
+
+        return {x, y, z};
+    }
+
+    [[nodiscard]] static color rayColorRecursive(const ray &r, const int depth, const hittable &world, const std::vector<Material> &materials, const int samples) {
+        constexpr color backgroundColor(0.53f, 0.807f, 0.92f, 1.0f);
+        if (depth == 0) return backgroundColor;
+
+        if (hitRecord rec{}; world.hit(r, interval(0.001, infinity), rec)) {
+            color lighting = materials[rec.matIndex].emission;
+            for (int i = 0; i < samples; i++) {
+                const auto scattered = ray(rec.p, uniformHemisphereSample());
+                if (color attenuation; BRDF_ds(materials[rec.matIndex], rec, attenuation, r, scattered)) {
+                    lighting += attenuation * rayColorRecursive(scattered, depth - 1, world, materials, samples) * glm::max(0.0f, glm::dot(rec.normal, glm::normalize(scattered.direction())));
+                }
+            }
+            return lighting;
+        }
+        return backgroundColor;
     }
 
     static color boxIntersections(const ray &r, const int depth, const BVH &world, const float lowerLimit,

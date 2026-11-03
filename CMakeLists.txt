@@ -14,3 +14,5 @@ target_sources(main
 
 find_package(OpenMP REQUIRED)
 target_link_libraries(main PRIVATE OpenMP::OpenMP_CXX)
+
+add_compile_options($<$<CONFIG:Release>:-O3>)

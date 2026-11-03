@@ -41,11 +41,11 @@ public:
         bucketsTest(model.getTriangles(), model.getLights(), model.getMaterials(), cam);
     }
 
-    void fastRender(const char *modelPath, const triangleModel &model, const camera &cam) const {
+    void fastRender(const char *modelPath, const triangleModel &model, const camera &cam, const char* outputFileName) const {
         std::ofstream timingLog("../logs/timing.txt");
         timingLog << "Timing Log of: " << modelPath << "\n \n";
 
-        buildLBVH(model.getTriangles(), model.getLights(), model.getMaterials(), cam, timingLog, (outputImagePath + "/LBVH.png").c_str());
+        buildSAH(model.getTriangles(), model.getLights(), model.getMaterials(), cam, timingLog, (outputImagePath + outputFileName).c_str());
 
         timingLog.close();
     }

@@ -57,9 +57,7 @@ public:
             return false;
         }
         // backface culling
-        if (dot(r.direction(), normal) > 0) {
-            return false;
-        }
+        if (dot(r.direction(), normal) > 0) {return false;}
         constexpr double epsilon = std::numeric_limits<double>::epsilon();
 
         const glm::vec3 e1 = vertices[1].position - vertices[0].position;
@@ -218,11 +216,11 @@ public:
 
                     if (materials[matIndex].emission != color(0.0f, 0.0f, 0.0f, 1.0f)) {
                         lights.push_back(tri);
-                    } else {
-                        Min = glm::min(Min, tri.Min);
-                        Max = glm::max(Max, tri.Max);
-                        triangles.push_back(tri);
                     }
+
+                    Min = glm::min(Min, tri.Min);
+                    Max = glm::max(Max, tri.Max);
+                    triangles.push_back(tri);
                     vertices.clear();
                 }
             }
