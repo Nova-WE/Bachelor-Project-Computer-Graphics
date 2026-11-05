@@ -1,6 +1,7 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include "hittable.h"
 #include "tinyObjLoaderImpl.h"
 #include "rtweekend.h"
@@ -9,15 +10,26 @@
 
 
 enum class MaterialType : uint32_t {
-    PHONG = 0
+    PHONG = 0,
+    DISNEY = 1
 };
 
 struct Material {
     MaterialType type;
-    color diffuse;
-    color specular;
+
     color emission;
-    float shininess;
+
+    color baseColor;
+    float subsurface;
+    float metallic;
+    float specular;
+    color specularTint;
+    float roughness;
+    float anisotropic;
+    float sheen;
+    color sheenTint;
+    float clearCoat;
+    float clearCoatGloss;
 
     std::shared_ptr<Texture> diffuseTexture;
     std::shared_ptr<Texture> normalTexture;
@@ -53,7 +65,7 @@ inline float specular(const glm::vec3 r, const float shininess, const glm::vec3 
 }
 
 inline color getDiffuseColor(const Material &mat, const hitRecord &rec) {
-    color diffuseComp = mat.diffuse;
+    color diffuseComp = mat.baseColor;
     if (mat.diffuseTexture) {
         diffuseComp *= mat.diffuseTexture->sample(rec.uv.x, rec.uv.y);
     }
@@ -82,8 +94,8 @@ inline bool scatterMaterial(const Material &mat,
             if (diffuseComp.a == 0.0f) {
                 return false; // fully transparent, no scattering
             }
-            const auto specularComp = specular(scattered.direction(), mat.shininess,
-                                               glm::normalize(cameraPosition - rec.p)) * mat.specular;
+            const auto specularComp = specular(scattered.direction(), mat.specular,
+                                               glm::normalize(cameraPosition - rec.p)) * mat.specularTint;
             attenuation = (diffuseComp + specularComp) * lightColor;
             return true;
         }
@@ -96,13 +108,42 @@ inline bool BRDF_ds(const Material &mat, const hitRecord &rec, color &attenuatio
         case MaterialType::PHONG: {
             const glm::vec3 omega_o = glm::normalize(inRay.direction());
             const glm::vec3 omega_i = glm::normalize(outRay.direction());
-            const color diffuseComp = mat.diffuse / pi;
+            const color diffuseComp = mat.baseColor / pi;
             const glm::vec3 spec1 = 2 * glm::dot(rec.normal, omega_o) * rec.normal - omega_o;
             const float spec2 = glm::max(0.0f, glm::dot(spec1, omega_i));
-            const color specularComp = mat.specular * glm::pow(spec2, mat.shininess);
+            const color specularComp = mat.specularTint * glm::pow(spec2, mat.specular);
 
             attenuation = diffuseComp + specularComp;
             return true;
+        }
+
+        case MaterialType::DISNEY: {
+            const glm::vec3 light = glm::normalize(inRay.direction());
+            const glm::vec3 view = glm::normalize(outRay.direction());
+            const glm::vec3 half = glm::normalize(light + view);
+            const glm::vec3 normal = rec.normal;
+
+            const double theta_l = glm::acos(glm::dot(normal, light) / (glm::length(normal) * glm::length(light)));
+            const double theta_v = glm::acos(glm::dot(normal, view) / (glm::length(normal) * glm::length(view)));
+            const double theta_h = glm::acos(glm::dot(normal, half) / (glm::length(normal) * glm::length(half)));
+            const double theta_d = glm::acos(glm::dot(light, half) / (glm::length(light) * glm::length(half)));
+
+            // Diffuse Component
+            const double F_D90 = 0.5f + 2 * mat.roughness * glm::cos(theta_d) * glm::cos(theta_d);
+            color f_d = mat.baseColor / pi;
+            f_d *= (1 + (F_D90 - 1) * glm::pow(1 - glm::cos(theta_l), 5));
+            f_d *= (1 + (F_D90 - 1) * glm::pow(1 - glm::cos(theta_v), 5));
+
+            // Specular Component
+            const double alpha = glm::pow(mat.roughness, 2);
+            const double alpha_sq = alpha * alpha;
+            double D_GGX = alpha_sq / (pi * glm::pow((alpha_sq - 1) * glm::pow(glm::cos(theta_h), 2) + 1, 2));
+
+            // Schlick-Fresnel Coefficient
+            const color F_Schlick = mat.specularTint + (color(1.0, 1.0, 1.0, 0.0) - mat.specularTint) * static_cast<float>(glm::pow(1 - glm::cos(theta_d), 5));
+
+            // Geometric Attenuation Term
+            const double alpha_G = glm::pow(0.5 * mat.roughness / 2, 2);
         }
     }
     return false;

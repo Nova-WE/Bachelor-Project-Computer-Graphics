@@ -185,10 +185,10 @@ public:
 
                         if (tinyMatId >= 0 && tinyMatId < static_cast<int>(material_data.size())) {
                             const auto &tinyMat = material_data[tinyMatId];
-                            mat.diffuse = color(tinyMat.diffuse[0], tinyMat.diffuse[1], tinyMat.diffuse[2], 1.0f);
-                            mat.specular = color(tinyMat.specular[0], tinyMat.specular[1], tinyMat.specular[2], 1.0f);
+                            mat.baseColor = color(tinyMat.diffuse[0], tinyMat.diffuse[1], tinyMat.diffuse[2], 1.0f);
+                            mat.specularTint = color(tinyMat.specular[0], tinyMat.specular[1], tinyMat.specular[2], 1.0f);
                             mat.emission = color(tinyMat.emission[0], tinyMat.emission[1], tinyMat.emission[2], 1.0f);
-                            mat.shininess = tinyMat.shininess;
+                            mat.specular = tinyMat.shininess;
                             std::string diffuseTexturePath;
                             if (!tinyMat.diffuse_texname.empty()) {
                                 diffuseTexturePath = modelDir + "/" + tinyMat.diffuse_texname;
@@ -201,10 +201,10 @@ public:
                             }
                             loadMaterialNormalTexture(mat, normalTexturePath);
                         } else {
-                            mat.diffuse = color(0.8f, 0.8f, 0.8f, 1.0f);
-                            mat.specular = color(0.5f, 0.5f, 0.5f, 1.0f);
+                            mat.baseColor = color(0.8f, 0.8f, 0.8f, 1.0f);
+                            mat.specularTint = color(0.5f, 0.5f, 0.5f, 1.0f);
                             mat.emission = color(0.0f, 0.0f, 0.0f, 1.0f);
-                            mat.shininess = 32.0f;
+                            mat.specular = 32.0f;
                         }
 
                         materials.push_back(mat);

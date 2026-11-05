@@ -3,6 +3,7 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <atomic>
+#include <random>
 
 #include "../lib/stb_image_write.h"
 
@@ -11,6 +12,9 @@
 #include "material.h"
 #include "triangleModel.h"
 #include "BoundingVolumeHierarchy/bvh.h"
+
+#define BLACK glm::vec4(0, 0, 0, 1)
+#define SKY glm::vec4(0.5, 0.7, 1.0, 1)
 
 class camera {
 public:
@@ -89,6 +93,44 @@ public:
                 }
             }
         }
+        stbi_write_png(outputPath, imageWidth, imageHeight, 3, data.data(), imageWidth * 3);
+        std::clog << "\rDone.                  \n";
+    }
+
+    void recursionDepthImage(const hittable &world, const std::vector<Material> &materials,
+                             const char *outputPath = "../images/recursion-depth.png") {
+        initialize();
+
+        std::vector<unsigned char> data(imageWidth * imageHeight * 3);
+        std::atomic<int> completedScanLines{0};
+        const float depthScale = maxDepth > 0 ? 1.0f / static_cast<float>(maxDepth) : 0.0f;
+
+        std::clog << "\rStarting Recursion Depth Render" << std::flush;
+
+#pragma omp parallel for schedule(dynamic)
+        for (int j = 0; j < imageHeight; j++) {
+            for (int i = 0; i < imageWidth; i++) {
+                int reachedDepth = 0;
+                for (int sample = 0; sample < samplesPerPixel; sample++) {
+                    reachedDepth = std::max(
+                            reachedDepth,
+                            rayRecursionDepth(getRay(i, j), maxDepth, world, materials, samplesPerBounce));
+                }
+
+                const int index = (j * imageWidth + i) * 3;
+                const float normalizedDepth = static_cast<float>(reachedDepth) * depthScale;
+                write_color(data, index, color(normalizedDepth, normalizedDepth, normalizedDepth, 1));
+            }
+
+            const int done = completedScanLines++;
+            if (done % 10 == 0 || done == imageHeight) {
+#pragma omp critical
+                {
+                    std::clog << "\rProgress: " << (100.0 * done / imageHeight) << "%" << std::flush;
+                }
+            }
+        }
+
         stbi_write_png(outputPath, imageWidth, imageHeight, 3, data.data(), imageWidth * 3);
         std::clog << "\rDone.                  \n";
     }
@@ -213,10 +255,10 @@ private:
         return {0.0f, 0.0f, 0.0f, 1.0f};
     }
 
-    static glm::vec3 uniformHemisphereSample() {
+    static glm::vec3 uniformHemisphereSample(const glm::vec3 &normal) {
         // generate 2 uniform random numbers in [0, 1)
-        const double eta_1 = rand() / (RAND_MAX + 1.0);
-        const double eta_2 = rand() / (RAND_MAX + 1.0);
+        const double eta_1 = randomDouble(0, 1);
+        const double eta_2 = randomDouble(0, 1);
 
         const double theta = glm::acos(1 - eta_1);
         const double phi = 2 * pi * eta_2;
@@ -225,12 +267,12 @@ private:
         const double y = glm::sin(theta) * glm::sin(phi);
         const double z = glm::cos(theta);
 
-        return {x, y, z};
+        return transformToNormal({x, y, z}, normal);
     }
 
-    static glm::vec3 cosineWeightedHemisphereSample() {
-        const double eta_1 = rand() / (RAND_MAX + 1.0);
-        const double eta_2 = rand() / (RAND_MAX + 1.0);
+    static glm::vec3 cosineWeightedHemisphereSample(const glm::vec3 &normal) {
+        const double eta_1 = randomDouble(0, 1);
+        const double eta_2 = randomDouble(0, 1);
 
         const double phi = 2 * pi * eta_2;
 
@@ -238,24 +280,55 @@ private:
         const double y = sin(phi) * sqrt(eta_1);
         const double z = sqrt(1 - eta_1);
 
-        return {x, y, z};
+        return transformToNormal({x, y, z}, normal);
+    }
+
+    static glm::vec3 transformToNormal(const glm::vec3 &sample, const glm::vec3 &normal) {
+        const glm::vec3 tangent = glm::normalize(
+                glm::cross(glm::abs(normal.x) < 0.9f
+                               ? glm::vec3(1, 0, 0)
+                               : glm::vec3(0, 1, 0),
+                           normal));
+        const glm::vec3 bitangent = glm::cross(normal, tangent);
+
+        return glm::normalize(sample.x * tangent + sample.y * bitangent + sample.z * normal);
     }
 
     [[nodiscard]] static color rayColorRecursive(const ray &r, const int depth, const hittable &world, const std::vector<Material> &materials, const int samples) {
-        constexpr color backgroundColor(0.53f, 0.807f, 0.92f, 1.0f);
-        if (depth == 0) return backgroundColor;
+        constexpr auto backgroundColor = SKY;
+        if (depth < 0) return backgroundColor;
 
         if (hitRecord rec{}; world.hit(r, interval(0.001, infinity), rec)) {
             color lighting = materials[rec.matIndex].emission;
             for (int i = 0; i < samples; i++) {
-                const auto scattered = ray(rec.p, cosineWeightedHemisphereSample());
+
+                const auto scattered = ray(rec.p, cosineWeightedHemisphereSample(rec.normal));
                 if (color attenuation; BRDF_ds(materials[rec.matIndex], rec, attenuation, r, scattered)) {
                     lighting += attenuation * rayColorRecursive(scattered, depth - 1, world, materials, samples) * glm::max(0.0f, glm::dot(rec.normal, glm::normalize(scattered.direction())));
                 }
             }
-            return lighting;
+            return lighting / static_cast<float>(samples);
         }
         return backgroundColor;
+    }
+
+    static int rayRecursionDepth(const ray &r, const int depth, const hittable &world,
+                                 const std::vector<Material> &materials, const int samples) {
+        if (depth < 0) return 0;
+
+        hitRecord rec{};
+        if (!world.hit(r, interval(0.001, infinity), rec)) return 0;
+
+        int deepestDepth = 1;
+        for (int i = 0; i < samples; i++) {
+            const auto scattered = ray(rec.p, cosineWeightedHemisphereSample(rec.normal));
+            if (color attenuation; BRDF_ds(materials[rec.matIndex], rec, attenuation, r, scattered)) {
+                deepestDepth = std::max(
+                        deepestDepth,
+                        1 + rayRecursionDepth(scattered, depth - 1, world, materials, samples));
+            }
+        }
+        return deepestDepth;
     }
 
     static color boxIntersections(const ray &r, const int depth, const BVH &world, const float lowerLimit,

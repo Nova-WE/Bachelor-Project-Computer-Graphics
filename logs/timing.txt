@@ -1,7 +1,7 @@
-Timing Log of: ../models/CornellBox.obj
+Timing Log of: ../models/dragonGI.obj
  
-SAH: Leaves=4 Internals=3 MaxDepth=3 LeafSizes=[4, 12]
-SAH build time: 0 ms
-SAH render time: 271974 ms
-Total time: 271974 ms
+SAH: Leaves=83900 Internals=83899 MaxDepth=24 LeafSizes=[1, 15]
+SAH build time: 6754 ms
+SAH render time: 73196 ms
+Total time: 79950 ms
 

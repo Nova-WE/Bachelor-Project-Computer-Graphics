@@ -276,4 +276,17 @@ private:
     }
 };
 
+class recursionDepthImage {
+public:
+    explicit recursionDepthImage(const triangleModel &model) : sah(model.getTriangles()) {
+        sah.build();
+    }
+
+    void generate(const std::vector<Material>& materials, camera cam, const std::string output) const {
+        cam.recursionDepthImage(sah, materials, ("../images/" + output + ".png").c_str());
+    }
+private:
+    SAH sah;
+};
+
 #endif //BACHELORPROJECT_TESTING_H
