@@ -102,4 +102,15 @@ inline std::ostream &operator<<(std::ostream &out, const glm::vec3 &v) {
     return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
 }
 
+inline glm::vec3 transformToNormal(const glm::vec3 &sample, const glm::vec3 &normal) {
+    const glm::vec3 tangent = glm::normalize(
+            glm::cross(glm::abs(normal.x) < 0.9f
+                           ? glm::vec3(1, 0, 0)
+                           : glm::vec3(0, 1, 0),
+                       normal));
+    const glm::vec3 bitangent = glm::cross(normal, tangent);
+
+    return glm::normalize(sample.x * tangent + sample.y * bitangent + sample.z * normal);
+}
+
 #endif // RTWEEKEND_H

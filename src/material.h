@@ -27,13 +27,51 @@ struct Material {
     float roughness;
     float anisotropic;
     float sheen;
-    color sheenTint;
+    //float sheenTint;
     float clearCoat;
     float clearCoatGloss;
 
     std::shared_ptr<Texture> diffuseTexture;
     std::shared_ptr<Texture> normalTexture;
 };
+
+inline std::ostream &operator<<(std::ostream &out, const Material &material) {
+    const auto materialTypeName = [](const MaterialType type) {
+        switch (type) {
+            case MaterialType::PHONG:
+                return "PHONG";
+            case MaterialType::DISNEY:
+                return "DISNEY";
+        }
+        return "UNKNOWN";
+    };
+
+    const auto printColor = [&out](const char *name, const color &value) {
+        out << "  " << name << ": ("
+            << value.r << ", " << value.g << ", " << value.b << ", " << value.a << ")\n";
+    };
+
+    out << "Material {\n"
+        << "  type: " << materialTypeName(material.type) << '\n';
+    printColor("emission", material.emission);
+    printColor("baseColor", material.baseColor);
+    out << "  subsurface: " << material.subsurface << '\n'
+        << "  metallic: " << material.metallic << '\n'
+        << "  specular: " << material.specular << '\n';
+    printColor("specularTint", material.specularTint);
+    out << "  roughness: " << material.roughness << '\n'
+        << "  anisotropic: " << material.anisotropic << '\n'
+        << "  sheen: " << material.sheen << '\n'
+        << "  clearCoat: " << material.clearCoat << '\n'
+        << "  clearCoatGloss: " << material.clearCoatGloss << '\n'
+        << "  diffuseTexture: " << (material.diffuseTexture ? "loaded" : "none") << '\n'
+        << "  normalTexture: " << (material.normalTexture ? "loaded" : "none") << '\n'
+        << '}';
+
+    return out;
+}
+
+
 
 inline void loadMaterialDiffuseTexture(Material &mat, const std::string &texturePath) {
     if (!texturePath.empty()) {
@@ -103,11 +141,33 @@ inline bool scatterMaterial(const Material &mat,
     return false;
 }
 
-inline bool BRDF_ds(const Material &mat, const hitRecord &rec, color &attenuation, const ray &outRay, const ray &inRay) {
+inline float Distribution_GGX(const Material &mat, const float cosThetaH) {
+    const float alpha = mat.roughness * mat.roughness;
+    const float alpha_sq = alpha * alpha;
+    const float denominator = (alpha_sq - 1.0f) * cosThetaH * cosThetaH + 1.0f;
+    return alpha_sq / (pi * denominator * denominator);
+}
+
+inline color Schlick_Fresnel(const Material &mat, const float cosThetaD, const color &F0) {
+    const float factor = glm::pow(1.0f - glm::clamp(cosThetaD, 0.0f, 1.0f), 5.0f);
+    return F0 + (color(1.0f) - F0) * factor;
+}
+
+inline float heaviside(const float a) {
+    return a > 0 ? 1.0f : 0.0f;
+}
+
+inline float GeometrySchlickGGX(const Material &mat, const float cosTheta) {
+    const float k = glm::pow(mat.roughness + 1.0f, 2.0f) / 8.0f;
+    return cosTheta / (cosTheta * (1.0f - k) + k);
+}
+
+inline bool BRDF_ds(const Material &mat, const hitRecord &rec, color &attenuation, const ray &outRay,
+                    const ray &inRay, float &D) {
     switch (mat.type) {
         case MaterialType::PHONG: {
             const glm::vec3 omega_o = glm::normalize(inRay.direction());
-            const glm::vec3 omega_i = glm::normalize(outRay.direction());
+            const glm::vec3 omega_i = glm::normalize(-outRay.direction());
             const color diffuseComp = mat.baseColor / pi;
             const glm::vec3 spec1 = 2 * glm::dot(rec.normal, omega_o) * rec.normal - omega_o;
             const float spec2 = glm::max(0.0f, glm::dot(spec1, omega_i));
@@ -119,31 +179,37 @@ inline bool BRDF_ds(const Material &mat, const hitRecord &rec, color &attenuatio
 
         case MaterialType::DISNEY: {
             const glm::vec3 light = glm::normalize(inRay.direction());
-            const glm::vec3 view = glm::normalize(outRay.direction());
+            const glm::vec3 view = glm::normalize(-outRay.direction());
             const glm::vec3 half = glm::normalize(light + view);
             const glm::vec3 normal = rec.normal;
 
-            const double theta_l = glm::acos(glm::dot(normal, light) / (glm::length(normal) * glm::length(light)));
-            const double theta_v = glm::acos(glm::dot(normal, view) / (glm::length(normal) * glm::length(view)));
-            const double theta_h = glm::acos(glm::dot(normal, half) / (glm::length(normal) * glm::length(half)));
-            const double theta_d = glm::acos(glm::dot(light, half) / (glm::length(light) * glm::length(half)));
+            const float cosThetaL = glm::max(0.0f, glm::dot(normal, light));
+            const float cosThetaV = glm::max(0.0f, glm::dot(normal, view));
+            const float cosThetaH = glm::max(0.0f, glm::dot(normal, half));
+            const float cosThetaD = glm::max(0.0f, glm::dot(light, half));
 
             // Diffuse Component
-            const double F_D90 = 0.5f + 2 * mat.roughness * glm::cos(theta_d) * glm::cos(theta_d);
+            const float F_D90 = 0.5f + 2.0f * mat.roughness * cosThetaD * cosThetaD;
             color f_d = mat.baseColor / pi;
-            f_d *= (1 + (F_D90 - 1) * glm::pow(1 - glm::cos(theta_l), 5));
-            f_d *= (1 + (F_D90 - 1) * glm::pow(1 - glm::cos(theta_v), 5));
+            f_d *= 1.0f + (F_D90 - 1.0f) * glm::pow(1.0f - cosThetaL, 5.0f);
+            f_d *= 1.0f + (F_D90 - 1.0f) * glm::pow(1.0f - cosThetaV, 5.0f);
+            const color diffuse = (1.0f - mat.metallic) * f_d;
 
             // Specular Component
-            const double alpha = glm::pow(mat.roughness, 2);
-            const double alpha_sq = alpha * alpha;
-            double D_GGX = alpha_sq / (pi * glm::pow((alpha_sq - 1) * glm::pow(glm::cos(theta_h), 2) + 1, 2));
+            const color F0 = glm::mix(0.08f * mat.specular * mat.specularTint, mat.baseColor, mat.metallic);
+            // Distribution Term GGX
+            const float D_GGX = Distribution_GGX(mat, cosThetaH);
 
             // Schlick-Fresnel Coefficient
-            const color F_Schlick = mat.specularTint + (color(1.0, 1.0, 1.0, 0.0) - mat.specularTint) * static_cast<float>(glm::pow(1 - glm::cos(theta_d), 5));
+            const color F_Schlick = Schlick_Fresnel(mat, cosThetaD, F0);
 
             // Geometric Attenuation Term
-            const double alpha_G = glm::pow(0.5 * mat.roughness / 2, 2);
+            const float G = GeometrySchlickGGX(mat, cosThetaL) * GeometrySchlickGGX(mat, cosThetaV);
+
+            const float denominator = glm::max(4.0f * cosThetaL * cosThetaV, 1e-4f);
+            attenuation = diffuse + (D_GGX * F_Schlick * G) / denominator;
+            D = D_GGX;
+            return true;
         }
     }
     return false;

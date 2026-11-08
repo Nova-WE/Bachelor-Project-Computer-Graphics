@@ -1,7 +1,7 @@
-Timing Log of: ../models/CornellBoxClosed.obj
+Timing Log of: ../models/CornellBoxSphere.obj
  
-SAH: Leaves=4 Internals=3 MaxDepth=2 LeafSizes=[2, 14]
-SAH build time: 0 ms
-SAH render time: 194297 ms
-Total time: 194297 ms
+SAH: Leaves=477 Internals=476 MaxDepth=12 LeafSizes=[2, 15]
+SAH build time: 29 ms
+SAH render time: 1235121 ms
+Total time: 1235150 ms
 

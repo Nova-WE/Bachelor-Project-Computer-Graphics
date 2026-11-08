@@ -181,14 +181,22 @@ public:
                         matIndex = it->second;
                     } else {
                         Material mat{};
-                        mat.type = MaterialType::PHONG;
+                        mat.type = MaterialType::DISNEY;
 
                         if (tinyMatId >= 0 && tinyMatId < static_cast<int>(material_data.size())) {
                             const auto &tinyMat = material_data[tinyMatId];
                             mat.baseColor = color(tinyMat.diffuse[0], tinyMat.diffuse[1], tinyMat.diffuse[2], 1.0f);
-                            mat.specularTint = color(tinyMat.specular[0], tinyMat.specular[1], tinyMat.specular[2], 1.0f);
-                            mat.emission = color(tinyMat.emission[0], tinyMat.emission[1], tinyMat.emission[2], 1.0f);
+                            mat.subsurface = 0.0f;
+                            mat.metallic = tinyMat.metallic;
                             mat.specular = tinyMat.shininess;
+                            mat.specularTint = color(tinyMat.specular[0], tinyMat.specular[1], tinyMat.specular[2], 1.0f);
+                            mat.roughness = glm::max(0.001f, tinyMat.roughness);
+                            mat.anisotropic = tinyMat.anisotropy;
+                            mat.sheen = tinyMat.sheen;
+                            mat.clearCoat = tinyMat.clearcoat_thickness;
+                            mat.clearCoatGloss = tinyMat.clearcoat_roughness;
+
+                            mat.emission = color(tinyMat.emission[0], tinyMat.emission[1], tinyMat.emission[2], 1.0f);
                             std::string diffuseTexturePath;
                             if (!tinyMat.diffuse_texname.empty()) {
                                 diffuseTexturePath = modelDir + "/" + tinyMat.diffuse_texname;
@@ -206,6 +214,8 @@ public:
                             mat.emission = color(0.0f, 0.0f, 0.0f, 1.0f);
                             mat.specular = 32.0f;
                         }
+
+                        std::cout << mat << std::endl;
 
                         materials.push_back(mat);
                         matIndex = static_cast<uint32_t>(materials.size() - 1);

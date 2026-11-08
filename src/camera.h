@@ -13,9 +13,6 @@
 #include "triangleModel.h"
 #include "BoundingVolumeHierarchy/bvh.h"
 
-#define BLACK glm::vec4(0, 0, 0, 1)
-#define SKY glm::vec4(0.5, 0.7, 1.0, 1)
-
 class camera {
 public:
     // default Camera parameters
@@ -32,6 +29,8 @@ public:
 
     double defocusAngle = 0;
     float focusDist = 10;
+
+    color backgroundColor;
 
     void render(const hittable &world, const std::vector<triangle> &lights,
                 const std::vector<Material> &materials, const char *outputPath = "../images/output.png") {
@@ -113,8 +112,8 @@ public:
                 int reachedDepth = 0;
                 for (int sample = 0; sample < samplesPerPixel; sample++) {
                     reachedDepth = std::max(
-                            reachedDepth,
-                            rayRecursionDepth(getRay(i, j), maxDepth, world, materials, samplesPerBounce));
+                        reachedDepth,
+                        rayRecursionDepth(getRay(i, j), maxDepth, world, materials, samplesPerBounce));
                 }
 
                 const int index = (j * imageWidth + i) * 3;
@@ -220,8 +219,9 @@ private:
         return lookFrom + (p[0] * defocusDisk_u) + (p[1] * defocusDisk_v);
     }
 
-    [[nodiscard]] color rayColor(const ray &r, const int depth, const hittable &world, const std::vector<triangle> &lights,
-                          const std::vector<Material> &materials) const {
+    [[nodiscard]] color rayColor(const ray &r, const int depth, const hittable &world,
+                                 const std::vector<triangle> &lights,
+                                 const std::vector<Material> &materials) const {
         if (depth <= 0) return {0, 0, 0, 1};
 
         if (hitRecord rec{}; world.hit(r, interval(0.001, infinity), rec)) {
@@ -247,7 +247,8 @@ private:
                     lighting += attenuation *
                             glm::max(0.0f, glm::dot(rec.normal, glm::normalize(lightRay.direction())));
                 } else {
-                    lighting += rayColor(ray(rec.p + 1e-3f * r.direction(), r.direction()), depth - 1, world, lights, materials);
+                    lighting += rayColor(ray(rec.p + 1e-3f * r.direction(), r.direction()), depth - 1, world, lights,
+                                         materials);
                 }
             }
             return lighting / static_cast<float>(lights.size());
@@ -283,31 +284,77 @@ private:
         return transformToNormal({x, y, z}, normal);
     }
 
-    static glm::vec3 transformToNormal(const glm::vec3 &sample, const glm::vec3 &normal) {
-        const glm::vec3 tangent = glm::normalize(
-                glm::cross(glm::abs(normal.x) < 0.9f
-                               ? glm::vec3(1, 0, 0)
-                               : glm::vec3(0, 1, 0),
-                           normal));
-        const glm::vec3 bitangent = glm::cross(normal, tangent);
+    static glm::vec3 GTRSampling(const glm::vec3 normal, const float alpha) {
+        const double eta_1 = randomDouble(0, 1);
+        const double eta_2 = randomDouble(0, 1);
+        constexpr double gamma = 2.0;
+        const double alpha_sq = alpha * alpha;
 
-        return glm::normalize(sample.x * tangent + sample.y * bitangent + sample.z * normal);
+        const double phi = 2 * pi * eta_1;
+
+        const double temp = glm::pow(alpha_sq, 1 - gamma) * (1 - eta_2) + eta_2;
+        const double cosTheta = glm::sqrt((1 - glm::pow(temp, 1.0 / 1 - gamma)) / (1 - alpha_sq));
+        const double sinTheta = glm::sqrt(1 - cosTheta * cosTheta);
+
+        const double x = sinTheta * glm::cos(phi);
+        const double y = sinTheta * glm::sin(phi);
+        const double z = cosTheta;
+
+        return transformToNormal({x, y, z}, normal);
     }
 
-    [[nodiscard]] static color rayColorRecursive(const ray &r, const int depth, const hittable &world, const std::vector<Material> &materials, const int samples) {
-        constexpr auto backgroundColor = SKY;
-        if (depth < 0) return backgroundColor;
+    static float calculatePDF(const float NoL, const float NoH, const float VoH, const float D, const float p_spec) {
+        const float pdf_d = NoL / pi;
+        const float pdf_s = VoH > 0.0f ? D * NoH / (4.0f * VoH) : 0.0f;
+
+        return p_spec * pdf_s + (1 - p_spec) * pdf_d;
+    }
+
+    [[nodiscard]] color rayColorRecursive(const ray &r, const int depth, const hittable &world,
+                                          const std::vector<Material> &materials, const int samples) {
+        if (depth < 0) return {0.0f, 0.0f, 0.0f, 1.0f};
+        constexpr double p_spec = 0.5; // probability of specular reflection
 
         if (hitRecord rec{}; world.hit(r, interval(0.001, infinity), rec)) {
-            color lighting = materials[rec.matIndex].emission;
+            const Material &mat = materials[rec.matIndex];
+            color emitted = mat.emission;
+            color contribution(0.0f);
             for (int i = 0; i < samples; i++) {
+                ray scattered{};
 
-                const auto scattered = ray(rec.p, cosineWeightedHemisphereSample(rec.normal));
-                if (color attenuation; BRDF_ds(materials[rec.matIndex], rec, attenuation, r, scattered)) {
-                    lighting += attenuation * rayColorRecursive(scattered, depth - 1, world, materials, samples) * glm::max(0.0f, glm::dot(rec.normal, glm::normalize(scattered.direction())));
+                const double rand = randomDouble();
+                if (rand < p_spec) {
+                    // Specular reflection
+                    const glm::vec3 half_vec = GTRSampling(rec.normal, mat.roughness * mat.roughness);
+                    const glm::vec3 reflectedDir = glm::reflect(r.direction(), half_vec);
+                    scattered = ray(rec.p, reflectedDir);
+                } else {
+                    // Diffuse reflection
+                    scattered = ray(rec.p, cosineWeightedHemisphereSample(rec.normal));
                 }
+
+                color brdf;
+                float D;
+                if (!BRDF_ds(materials[rec.matIndex], rec, brdf, r, scattered, D)) {
+                    std::cout << "skipped sample due to zero BRDF" << std::endl;
+                    continue; // skip if BRDF is zero
+                }
+                const float NoL = glm::max(glm::dot(rec.normal, scattered.direction()), 0.0f);
+                const glm::vec3 h = glm::normalize(scattered.direction() - r.direction());
+                const float NoH = glm::max(glm::dot(rec.normal, h), 0.0f);
+                const float VoH = glm::abs(glm::dot(-r.direction(), h));
+
+                const float pdf = calculatePDF(NoL, NoH, VoH, D, p_spec);
+
+                if (pdf <= 0.0f) {
+                    continue;
+                }
+
+                const color incoming = rayColorRecursive(scattered, depth - 1, world, materials, samples);
+
+                contribution += brdf * incoming * (NoL / pdf);
             }
-            return lighting / static_cast<float>(samples);
+            return emitted + contribution / static_cast<float>(samples);
         }
         return backgroundColor;
     }
@@ -322,10 +369,11 @@ private:
         int deepestDepth = 1;
         for (int i = 0; i < samples; i++) {
             const auto scattered = ray(rec.p, cosineWeightedHemisphereSample(rec.normal));
-            if (color attenuation; BRDF_ds(materials[rec.matIndex], rec, attenuation, r, scattered)) {
+            float D;
+            if (color attenuation; BRDF_ds(materials[rec.matIndex], rec, attenuation, r, scattered, D)) {
                 deepestDepth = std::max(
-                        deepestDepth,
-                        1 + rayRecursionDepth(scattered, depth - 1, world, materials, samples));
+                    deepestDepth,
+                    1 + rayRecursionDepth(scattered, depth - 1, world, materials, samples));
             }
         }
         return deepestDepth;
