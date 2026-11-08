@@ -25,7 +25,7 @@ static void renderCornellBox(camera cam) {
     constexpr auto modelPath = "../models/CornellBoxSphere.obj";
     const auto model = make_shared<triangleModel>(modelPath);
     const Rendering r(modelPath);
-    r.fastRender(modelPath, *model, cam, "/Cosine.png");
+    r.fastRender(modelPath, *model, cam, "/DisneyRT.png");
 }
 
 static void renderCornellSpheres(camera cam) {
@@ -56,10 +56,10 @@ int main() {
     // set view axis to -Y on export in Blender !!!!
     camera cam;
     cam.maxDepth = 3;
-    cam.samplesPerPixel = 400;
+    cam.samplesPerPixel = 1024;
     cam.samplesPerBounce = 1;
 
-    renderCornellBox(cam);
+    renderDragonGI(cam);
 /*
     const auto depthTest = recursionDepthImage(*model);
     for (int i = 1; i < 6; i++) {
