@@ -16,7 +16,7 @@ public:
     glm::vec2 uv;
 
     void setFaceNormal(const ray &r, const glm::vec3 &outwardNormal) {
-        // The outwardNormal is assumend to be of unit length
+        // The outwardNormal is assumed to be of unit length
 
         frontFace = dot(r.direction(), outwardNormal) < 0;
         normal = frontFace ? outwardNormal : -outwardNormal;

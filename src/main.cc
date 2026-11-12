@@ -73,7 +73,7 @@ int main() {
     cam.samplesPerBounce = 1;
     cam.nextEventEstimation = true;
 
-    renderDragonGI(cam);
+    renderCornellBox(cam);
 
     //runDepthTest(cam);
 
