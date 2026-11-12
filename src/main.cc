@@ -25,7 +25,7 @@ static void renderCornellBox(camera cam) {
     constexpr auto modelPath = "../models/CornellBoxSphere.obj";
     const auto model = make_shared<triangleModel>(modelPath);
     const Rendering r(modelPath);
-    r.fastRender(modelPath, *model, cam, "/DisneyRT.png");
+    r.fastRender(modelPath, *model, cam, "/Disney.png");
 }
 
 static void renderCornellSpheres(camera cam) {
@@ -52,22 +52,30 @@ static void renderDragonGI(camera cam) {
     r.fastRender(modelPath, *model, cam, "/Disney.png");
 }
 
+static void runDepthTest(camera cam) {
+    cam.imageWidth = 1000;
+    cam.aspectRatio = 1.0;
+    cam.vFov = 40.0f;
+    cam.backgroundColor = BLACK;
+
+    constexpr auto modelPath = "../models/CornellBoxClosed.obj";
+    const auto model = make_shared<triangleModel>(modelPath);
+    const Rendering r(modelPath);
+
+    r.depthTest(*model, cam);
+}
+
 int main() {
     // set view axis to -Y on export in Blender !!!!
     camera cam;
     cam.maxDepth = 3;
-    cam.samplesPerPixel = 1024;
+    cam.samplesPerPixel = 20;
     cam.samplesPerBounce = 1;
+    cam.nextEventEstimation = true;
 
-    renderDragonGI(cam);
-/*
-    const auto depthTest = recursionDepthImage(*model);
-    for (int i = 1; i < 6; i++) {
-        cam.maxDepth = i;
-        //r.fastRender(modelPath, *model, cam, ("/" + std::to_string(i) + ".png").c_str());
-        depthTest.generate(model->getMaterials(), cam, std::to_string(i));
-    }
-*/
+    renderCornellBox(cam);
+
+    //runDepthTest(cam);
 
     //r.sampleTest(*model, cam);
 

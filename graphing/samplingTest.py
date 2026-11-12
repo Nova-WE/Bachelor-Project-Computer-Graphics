@@ -33,6 +33,17 @@ def cosine_hemisphere_sampling(num_samples=5000):
 
     return x, y, z
 
+def uniform_triangle_sampling(num_samples=5000):
+    eta1 = np.random.uniform(0, 1, num_samples)
+    eta2 = np.random.uniform(0, 1, num_samples)
+
+    # Generate random samples in barycentric coordinates
+    sq_1 = np.sqrt(eta1)
+    u = 1 - sq_1
+    v = eta2 * sq_1
+
+    return u, v, 1 - u - v
+
 
 def plot_hemisphere_samples(title, x, y, z):
     fig = plt.figure()
@@ -46,5 +57,6 @@ def plot_hemisphere_samples(title, x, y, z):
 
 
 if __name__ == "__main__":
-    plot_hemisphere_samples("Uniform Hemisphere Sampling", *uniform_hemisphere_sampling(2000))
-    plot_hemisphere_samples("Cosine Hemisphere Sampling", *cosine_hemisphere_sampling(2000))
+    #plot_hemisphere_samples("Uniform Hemisphere Sampling", *uniform_hemisphere_sampling(2000))
+    #plot_hemisphere_samples("Cosine Hemisphere Sampling", *cosine_hemisphere_sampling(2000))
+    plot_hemisphere_samples("Uniform Triangle Sampling", *uniform_triangle_sampling(2000))

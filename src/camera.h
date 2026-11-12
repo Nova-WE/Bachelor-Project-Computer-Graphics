@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <algorithm>
 #include <atomic>
 #include <random>
 
@@ -21,6 +22,8 @@ public:
     int samplesPerPixel = 1;
     int samplesPerBounce = 1;
     int maxDepth = 20;
+
+    bool nextEventEstimation = true;
 
     double vFov = 23.0;
     glm::vec3 lookFrom = glm::vec3(0, 0, 0);
@@ -45,11 +48,12 @@ public:
 
 #pragma omp parallel for schedule(dynamic)
         for (int j = 0; j < imageHeight; j++) {
+            thread_local std::mt19937 rng(std::random_device{}());
             for (int i = 0; i < imageWidth; i++) {
                 color pixelColor(0, 0, 0, 1);
                 for (int sample = 0; sample < samplesPerPixel; sample++) {
                     ray r = getRay(i, j);
-                    pixelColor += rayColorRecursive(r, maxDepth, world, materials, samplesPerBounce);
+                    pixelColor += rayColorRecursive(r, maxDepth, world, lights, materials, samplesPerBounce, true);
                 }
                 const int index = (j * imageWidth + i) * 3;
                 write_color(data, index, pixelColor * pixelSampleScale);
@@ -256,6 +260,11 @@ private:
         return {0.0f, 0.0f, 0.0f, 1.0f};
     }
 
+    static std::mt19937 &rng() {
+        thread_local std::mt19937 generator(std::random_device{}());
+        return generator;
+    }
+
     static glm::vec3 uniformHemisphereSample(const glm::vec3 &normal) {
         // generate 2 uniform random numbers in [0, 1)
         const double eta_1 = randomDouble(0, 1);
@@ -285,6 +294,10 @@ private:
     }
 
     static glm::vec3 GTRSampling(const glm::vec3 normal, const float alpha) {
+        if (alpha <= 0.0f) {
+            return normal;
+        }
+
         const double eta_1 = randomDouble(0, 1);
         const double eta_2 = randomDouble(0, 1);
         constexpr double gamma = 2.0;
@@ -310,20 +323,118 @@ private:
         return p_spec * pdf_s + (1 - p_spec) * pdf_d;
     }
 
+    static color directIllumination(const ray &r, const hitRecord &rec, const hittable &world,
+                                    const std::vector<triangle> &lights, const std::vector<Material> &materials) {
+        if (lights.empty()) return {0.0f, 0.0f, 0.0f, 1.0f};
+
+        std::uniform_int_distribution<int> distribution(0, lights.size() - 1);
+        const triangle &light = lights[distribution(rng())];
+
+
+        const glm::vec3 lightSample = light.uniformAreaSample();
+        const glm::vec3 toLight = lightSample - rec.p;
+        const float distanceToLight = glm::length(toLight);
+
+        const glm::vec3 toLightNormalized = toLight / distanceToLight;
+        const ray shadowRay(rec.p + 1e-3f * rec.normal, toLightNormalized);
+
+        const float surface_cosTheta = glm::dot(rec.normal, toLightNormalized);
+        const float light_cosTheta = glm::dot(light.normal, -toLightNormalized);
+        if (surface_cosTheta <= 0.0f || light_cosTheta <= 0.0f) {
+            return {0.0f, 0.0f, 0.0f, 1.0f}; // light is behind the surface
+        }
+
+        hitRecord shadowHit{};
+        if (world.hit(shadowRay, interval(1e-3f, distanceToLight - 1e-3f), shadowHit)) {
+            return {0.0f, 0.0f, 0.0f, 1.0f}; // point is in shadow
+        }
+
+        color brdf;
+        float D;
+        if (!BRDF_ds(materials[rec.matIndex], rec, brdf, r, shadowRay, D)) {
+            return {0.0f, 0.0f, 0.0f, 1.0f}; // skip if BRDF is zero
+        }
+
+        const float selectionPDF = 1.0f / static_cast<float>(lights.size());
+        const float areaPDF = selectionPDF / light.area();
+        const float G = glm::abs(light_cosTheta / (distanceToLight * distanceToLight));
+
+        return brdf * materials[light.matIndex].emission * G * surface_cosTheta / areaPDF;
+    }
+
+    [[nodiscard]] color mirrorReflection(const ray &r, const hitRecord &rec, const hittable &world,
+                           const std::vector<triangle> &lights, const std::vector<Material> &materials, const int depth,
+                           const float prob, const int recursiveSamples) const {
+        // mirror reflection
+        const auto scattered = ray(rec.p, glm::reflect(r.direction(), rec.normal));
+
+        const float cosTheta = glm::clamp(
+            glm::dot(-glm::normalize(r.direction()), rec.normal),
+            0.0f, 1.0f);
+
+        const Material &mat = materials[rec.matIndex];
+        const color F0 = glm::mix(
+            0.08f * mat.specular * mat.specularTint,
+            mat.baseColor,
+            mat.metallic);
+
+        const float fresnel =
+                glm::pow(1.0f - cosTheta, 5.0f);
+
+        const color F = F0 + (color(1.0f) - F0) * fresnel;
+        const color incoming =
+                rayColorRecursive(scattered, depth - 1, world, lights, materials, recursiveSamples,
+                                  true);
+
+        return F * incoming / prob;
+    }
+
+    static float specularProbability(const Material& mat, const ray& r, const hitRecord& rec) {
+        if (mat.roughness == 0.0f) {
+            return 1.0f; // perfect mirror
+        }
+
+        const float cosTheta = glm::clamp(
+            glm::dot(-glm::normalize(r.direction()), rec.normal), 0.0f, 1.0f);
+
+        const color F0 = glm::mix(
+            0.08f * mat.specular * mat.specularTint,
+            mat.baseColor,
+            mat.metallic);
+
+        const color F = Schlick_Fresnel(mat, cosTheta, F0);
+        return glm::clamp(glm::max(F.r, glm::max(F.g, F.b)), 0.05f, 0.95f);
+    }
+
     [[nodiscard]] color rayColorRecursive(const ray &r, const int depth, const hittable &world,
-                                          const std::vector<Material> &materials, const int samples) {
+                                          const std::vector<triangle> &lights,
+                                          const std::vector<Material> &materials, const int recursiveSamples,
+                                          const bool specularReflection) const {
         if (depth < 0) return {0.0f, 0.0f, 0.0f, 1.0f};
-        constexpr double p_spec = 0.5; // probability of specular reflection
 
         if (hitRecord rec{}; world.hit(r, interval(0.001, infinity), rec)) {
             const Material &mat = materials[rec.matIndex];
-            color emitted = mat.emission;
-            color contribution(0.0f);
-            for (int i = 0; i < samples; i++) {
-                ray scattered{};
+            color emitted = (depth == maxDepth || !nextEventEstimation || specularReflection ? 1.0f : 0.0f) * mat.
+                            emission;
 
+            color direct(0.0f);
+            if (nextEventEstimation && mat.roughness > 0.0f && mat.emission == color(0.0f, 0.0f, 0.0f, 1.0f)) {
+                direct = directIllumination(r, rec, world, lights, materials);
+            }
+
+            color indirect(0.0f);
+            for (int i = 0; i < recursiveSamples; i++) {
+                const float p_spec = specularProbability(mat, r, rec);
+
+                ray scattered{};
                 const double rand = randomDouble();
                 if (rand < p_spec) {
+                    if (mat.roughness == 0.0) {
+                        // Divide by the probability with which this delta event was sampled.
+                        indirect += mirrorReflection(r, rec, world, lights, materials, depth, p_spec, recursiveSamples);
+                        continue;
+                    }
+
                     // Specular reflection
                     const glm::vec3 half_vec = GTRSampling(rec.normal, mat.roughness * mat.roughness);
                     const glm::vec3 reflectedDir = glm::reflect(r.direction(), half_vec);
@@ -335,7 +446,7 @@ private:
 
                 color brdf;
                 float D;
-                if (!BRDF_ds(materials[rec.matIndex], rec, brdf, r, scattered, D)) {
+                if (!BRDF_ds(mat, rec, brdf, r, scattered, D)) {
                     std::cout << "skipped sample due to zero BRDF" << std::endl;
                     continue; // skip if BRDF is zero
                 }
@@ -344,17 +455,18 @@ private:
                 const float NoH = glm::max(glm::dot(rec.normal, h), 0.0f);
                 const float VoH = glm::abs(glm::dot(-r.direction(), h));
 
-                const float pdf = calculatePDF(NoL, NoH, VoH, D, p_spec);
+                float pdf = calculatePDF(NoL, NoH, VoH, D, p_spec);
 
                 if (pdf <= 0.0f) {
                     continue;
                 }
 
-                const color incoming = rayColorRecursive(scattered, depth - 1, world, materials, samples);
+                const color incoming = rayColorRecursive(scattered, depth - 1, world, lights, materials,
+                                                         recursiveSamples, false);
 
-                contribution += brdf * incoming * (NoL / pdf);
+                indirect += (brdf * incoming * NoL) / pdf;
             }
-            return emitted + contribution / static_cast<float>(samples);
+            return emitted + (direct + indirect / static_cast<float>(recursiveSamples));
         }
         return backgroundColor;
     }

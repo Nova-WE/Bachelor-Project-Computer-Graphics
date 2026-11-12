@@ -24,6 +24,7 @@ struct Material {
     float metallic;
     float specular;
     color specularTint;
+    float specularProbability;
     float roughness;
     float anisotropic;
     float sheen;

@@ -58,7 +58,7 @@ public:
             return false;
         }
         // backface culling
-        if (dot(r.direction(), normal) > 0) {return false;}
+        if (dot(r.direction(), normal) > 0) { return false; }
         constexpr double epsilon = std::numeric_limits<double>::epsilon();
 
         const glm::vec3 e1 = vertices[1].position - vertices[0].position;
@@ -112,6 +112,24 @@ public:
         }
         return false;
     }
+
+    [[nodiscard]] glm::vec3 uniformAreaSample() const {
+        const auto eta_1 = static_cast<float>(randomDouble());
+        const auto eta_2 = static_cast<float>(randomDouble());
+
+        const float sq_u = sqrtf(eta_1);
+        const float b0 = 1.0f - sq_u;
+        const float b1 = eta_2 * sq_u;
+
+        return vertices[0].position * b0 + vertices[1].position * b1 + vertices[2].position * (1.0f - b0 - b1);
+    }
+
+    [[nodiscard]] float area() const {
+        return 0.5f * glm::length(glm::cross(
+                   vertices[1].position - vertices[0].position,
+                   vertices[2].position - vertices[0].position
+               ));
+    }
 };
 
 class triangleModel : public hittable {
@@ -134,6 +152,10 @@ public:
             std::cout << err << std::endl;
             return;
         }
+
+        std::cout << "Loading OBJ: " << filename << "\n";
+        if (!warn.empty()) std::cout << "tinyobj warn: " << warn << "\n";
+        if (!err.empty()) std::cout << "tinyobj err: " << err << "\n";
         // converts the obj data into triangles
         std::unordered_map<int, uint32_t> tinyMatIdToIndex;
 
@@ -188,9 +210,10 @@ public:
                             mat.baseColor = color(tinyMat.diffuse[0], tinyMat.diffuse[1], tinyMat.diffuse[2], 1.0f);
                             mat.subsurface = 0.0f;
                             mat.metallic = tinyMat.metallic;
-                            mat.specular = tinyMat.shininess;
-                            mat.specularTint = color(tinyMat.specular[0], tinyMat.specular[1], tinyMat.specular[2], 1.0f);
-                            mat.roughness = glm::max(0.001f, tinyMat.roughness);
+                            mat.specular = tinyMat.ior;
+                            mat.specularTint = color(tinyMat.specular[0], tinyMat.specular[1], tinyMat.specular[2],
+                                                     1.0f);
+                            mat.roughness = tinyMat.roughness;
                             mat.anisotropic = tinyMat.anisotropy;
                             mat.sheen = tinyMat.sheen;
                             mat.clearCoat = tinyMat.clearcoat_thickness;
@@ -217,7 +240,7 @@ public:
 
                         std::cout << mat << std::endl;
 
-                        materials.push_back(mat);
+                        materials.emplace_back(mat);
                         matIndex = static_cast<uint32_t>(materials.size() - 1);
                         tinyMatIdToIndex.emplace(tinyMatId, matIndex);
                     }
@@ -226,12 +249,12 @@ public:
                     const auto tri = triangle(vertices[0], vertices[1], vertices[2], normal, matIndex);
 
                     if (materials[matIndex].emission != color(0.0f, 0.0f, 0.0f, 1.0f)) {
-                        lights.push_back(tri);
+                        lights.emplace_back(tri);
                     }
 
                     Min = glm::min(Min, tri.Min);
                     Max = glm::max(Max, tri.Max);
-                    triangles.push_back(tri);
+                    triangles.emplace_back(tri);
                     vertices.clear();
                 }
             }
@@ -240,9 +263,6 @@ public:
         codeGenerator = MortonCode(Min, Max);
         calculateGridIndices();
 
-        std::cout << "Loading OBJ: " << filename << "\n";
-        if (!warn.empty()) std::cout << "tinyobj warn: " << warn << "\n";
-        if (!err.empty()) std::cout << "tinyobj err: " << err << "\n";
         std::cout << "Loaded triangles: " << triangles.size() << "\n";
         std::cout << "Loaded lights: " << lights.size() << "\n";
         std::cout << "Loaded materials: " << materials.size() << "\n";

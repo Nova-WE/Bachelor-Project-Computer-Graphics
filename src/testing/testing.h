@@ -54,6 +54,15 @@ public:
         samplesTest(model, cam);
     }
 
+    void depthTest(const triangleModel &model, camera cam) const {
+        SAH sah(model.getTriangles());
+        sah.build();
+        for (int i = 0; i < 6; i++) {
+            cam.maxDepth = i;
+            cam.recursionDepthImage(sah, model.getMaterials(), (outputImagePath + "/depth=" + std::to_string(i) + ".png").c_str());
+        }
+    }
+
 private:
     std::string outputImagePath;
 
