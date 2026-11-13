@@ -31,7 +31,7 @@ static void renderCornellBox(camera cam) {
 static void renderCornellSpheres(camera cam) {
     cam.imageWidth = 1000;
     cam.aspectRatio = 1000.0 / 780.0;
-    cam.vFov = 32.0f;
+    cam.vFov = 31.0f;
     cam.backgroundColor = BLACK;
 
     constexpr auto modelPath = "../models/CornellBoxShinySpheres.obj";
@@ -69,11 +69,11 @@ int main() {
     // set view axis to -Y on export in Blender !!!!
     camera cam;
     cam.maxDepth = 3;
-    cam.samplesPerPixel = 20;
+    cam.samplesPerPixel = 10;
     cam.samplesPerBounce = 1;
     cam.nextEventEstimation = true;
 
-    renderCornellBox(cam);
+    renderCornellSpheres(cam);
 
     //runDepthTest(cam);
 

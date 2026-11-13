@@ -95,12 +95,14 @@ public:
         if (t > epsilon && ray_t.surrounds(t)) {
             rec.t = t;
             rec.p = r.at(rec.t);
-            rec.setFaceNormal(r, normal);
 
             // interpolate uv using barycentric coordinates
             const auto w0 = static_cast<float>(1.0 - u - v);
             const auto w1 = static_cast<float>(u);
             const auto w2 = static_cast<float>(v);
+
+            const glm::vec3 interpolateNormal = glm::normalize(w0 * vertices[0].normal + w1 * vertices[1].normal + w2 * vertices[2].normal);
+            rec.setFaceNormal(r, interpolateNormal);
 
             rec.uv = glm::vec2(
                 w0 * vertices[0].uv.x + w1 * vertices[1].uv.x + w2 * vertices[2].uv.x,
@@ -245,7 +247,9 @@ public:
                         tinyMatIdToIndex.emplace(tinyMatId, matIndex);
                     }
 
-                    glm::vec3 normal = vertices[0].normal;
+                    glm::vec3 normal = glm::normalize(glm::cross(
+                            vertices[1].position - vertices[0].position,
+                            vertices[2].position - vertices[0].position));
                     const auto tri = triangle(vertices[0], vertices[1], vertices[2], normal, matIndex);
 
                     if (materials[matIndex].emission != color(0.0f, 0.0f, 0.0f, 1.0f)) {
