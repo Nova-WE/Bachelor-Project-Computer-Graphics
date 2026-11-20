@@ -95,6 +95,7 @@ public:
         if (t > epsilon && ray_t.surrounds(t)) {
             rec.t = t;
             rec.p = r.at(rec.t);
+            rec.area = area();
 
             // interpolate uv using barycentric coordinates
             const auto w0 = static_cast<float>(1.0 - u - v);
@@ -209,10 +210,11 @@ public:
 
                         if (tinyMatId >= 0 && tinyMatId < static_cast<int>(material_data.size())) {
                             const auto &tinyMat = material_data[tinyMatId];
+                            mat.name = tinyMat.name;
                             mat.baseColor = color(tinyMat.diffuse[0], tinyMat.diffuse[1], tinyMat.diffuse[2], 1.0f);
                             mat.subsurface = 0.0f;
                             mat.metallic = tinyMat.metallic;
-                            mat.specular = tinyMat.ior;
+                            mat.specular = 0.5f;
                             mat.specularTint = color(tinyMat.specular[0], tinyMat.specular[1], tinyMat.specular[2],
                                                      1.0f);
                             mat.roughness = tinyMat.roughness;
@@ -220,6 +222,10 @@ public:
                             mat.sheen = tinyMat.sheen;
                             mat.clearCoat = tinyMat.clearcoat_thickness;
                             mat.clearCoatGloss = tinyMat.clearcoat_roughness;
+
+                            mat.transmittance = color(tinyMat.transmittance[0], tinyMat.transmittance[1], tinyMat.transmittance[2], 1.0f);
+                            mat.transmission = tinyMat.dissolve;
+                            mat.refraction = tinyMat.ior;
 
                             mat.emission = color(tinyMat.emission[0], tinyMat.emission[1], tinyMat.emission[2], 1.0f);
                             std::string diffuseTexturePath;

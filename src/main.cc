@@ -2,6 +2,9 @@
 #include "camera.h"
 #include "triangleModel.h"
 #include "testing/testing.h"
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
 
 #define BLACK glm::vec4(0, 0, 0, 1)
 #define SKY glm::vec4(0.5, 0.7, 1.0, 1)
@@ -58,22 +61,37 @@ static void runDepthTest(camera cam) {
     cam.vFov = 40.0f;
     cam.backgroundColor = BLACK;
 
-    constexpr auto modelPath = "../models/CornellBoxClosed.obj";
+    constexpr auto modelPath = "../models/CornellBoxSphere.obj";
     const auto model = make_shared<triangleModel>(modelPath);
     const Rendering r(modelPath);
 
     r.depthTest(*model, cam);
 }
 
-int main() {
+int main(const int argc, char **argv) {
+    if (argc > 1) {
+        if (std::strcmp(argv[1], "--seed") == 0 && argc > 2) {
+            char *end = nullptr;
+            const auto seed = std::strtoull(argv[2], &end, 10);
+            if (end == argv[2] || *end != '\0') {
+                std::cerr << "Invalid seed: " << argv[2] << "\n";
+                return 1;
+            }
+            setRandomSeed(seed);
+        } else {
+            std::cerr << "Usage: " << argv[0] << " [--seed UINT64]\n";
+            return 1;
+        }
+    }
+
     // set view axis to -Y on export in Blender !!!!
     camera cam;
-    cam.maxDepth = 3;
-    cam.samplesPerPixel = 10;
+    cam.maxDepth = 4;
+    cam.samplesPerPixel = 5;
     cam.samplesPerBounce = 1;
     cam.nextEventEstimation = true;
 
-    renderCornellSpheres(cam);
+    renderCornellBox(cam);
 
     //runDepthTest(cam);
 

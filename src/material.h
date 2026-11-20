@@ -16,6 +16,7 @@ enum class MaterialType : uint32_t {
 
 struct Material {
     MaterialType type;
+    std::string name;
 
     color emission;
 
@@ -31,6 +32,10 @@ struct Material {
     //float sheenTint;
     float clearCoat;
     float clearCoatGloss;
+
+    color transmittance;
+    float transmission;
+    float refraction;
 
     std::shared_ptr<Texture> diffuseTexture;
     std::shared_ptr<Texture> normalTexture;
@@ -53,7 +58,8 @@ inline std::ostream &operator<<(std::ostream &out, const Material &material) {
     };
 
     out << "Material {\n"
-        << "  type: " << materialTypeName(material.type) << '\n';
+        << "  type: " << materialTypeName(material.type) << '\n'
+        << "  name: " << material.name << '\n';
     printColor("emission", material.emission);
     printColor("baseColor", material.baseColor);
     out << "  subsurface: " << material.subsurface << '\n'
@@ -64,7 +70,10 @@ inline std::ostream &operator<<(std::ostream &out, const Material &material) {
         << "  anisotropic: " << material.anisotropic << '\n'
         << "  sheen: " << material.sheen << '\n'
         << "  clearCoat: " << material.clearCoat << '\n'
-        << "  clearCoatGloss: " << material.clearCoatGloss << '\n'
+        << "  clearCoatGloss: " << material.clearCoatGloss << '\n';
+    printColor("transmittance", material.transmittance);
+    out << "  refraction: " << material.refraction << '\n'
+        << "  transmission: " << material.transmission << '\n'
         << "  diffuseTexture: " << (material.diffuseTexture ? "loaded" : "none") << '\n'
         << "  normalTexture: " << (material.normalTexture ? "loaded" : "none") << '\n'
         << '}';

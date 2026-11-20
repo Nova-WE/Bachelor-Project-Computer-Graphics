@@ -3,9 +3,10 @@
 
 #include <cmath>
 #include <iostream>
-#include <cstdlib>
 #include <limits>
 #include <memory>
+#include <random>
+#include <cstdint>
 
 // C++ std
 
@@ -19,16 +20,68 @@ constexpr float pi = 3.1415926535897932385;
 
 // utility functions
 
+inline std::uint64_t randomSeedBase = [] {
+    std::random_device device;
+    return (static_cast<std::uint64_t>(device()) << 32) | device();
+}();
+
+inline std::uint64_t randomGeneration = 0;
+
+inline std::uint64_t mixRandomSeed(const std::uint64_t seed) {
+    std::uint64_t value = seed + 0x9e3779b97f4a7c15ULL;
+    value = (value ^ (value >> 30)) * 0xbf58476d1ce4e5b9ULL;
+    value = (value ^ (value >> 27)) * 0x94d049bb133111ebULL;
+    return value ^ (value >> 31);
+}
+
+inline void setRandomSeed(const std::uint64_t seed) {
+    randomSeedBase = seed;
+    ++randomGeneration;
+}
+
+struct RandomEngineState {
+    std::mt19937_64 engine;
+    std::uint64_t generation = std::numeric_limits<std::uint64_t>::max();
+    std::uint64_t stream = 0;
+};
+
+inline RandomEngineState &randomEngineState() {
+    thread_local RandomEngineState state;
+    return state;
+}
+
+inline std::mt19937_64 &randomEngine() {
+    RandomEngineState &state = randomEngineState();
+    if (state.generation != randomGeneration) {
+        state.engine.seed(mixRandomSeed(randomSeedBase ^ state.stream));
+        state.generation = randomGeneration;
+    }
+    return state.engine;
+}
+
+inline void seedRandomStream(const std::uint64_t stream) {
+    RandomEngineState &state = randomEngineState();
+    state.engine.seed(mixRandomSeed(randomSeedBase ^ stream));
+    state.generation = randomGeneration;
+    state.stream = stream;
+}
+
 inline float degreesToRadians(const float degrees) {
     return degrees * pi / 180.0;
 }
 
 inline double randomDouble() {
-    return std::rand() / (RAND_MAX + 1.0);
+    std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    return distribution(randomEngine());
 }
 
 inline double randomDouble(const double min, const double max) {
     return min + (max - min) * randomDouble();
+}
+
+inline int randomInt(const int min, const int max) {
+    std::uniform_int_distribution<int> distribution(min, max);
+    return distribution(randomEngine());
 }
 
 // Common headers

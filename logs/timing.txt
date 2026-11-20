@@ -1,7 +1,7 @@
-Timing Log of: ../models/CornellBoxShinySpheres.obj
+Timing Log of: ../models/CornellBoxSphere.obj
  
-SAH: Leaves=217 Internals=216 MaxDepth=12 LeafSizes=[2, 15]
-SAH build time: 21 ms
-SAH render time: 41309 ms
-Total time: 41330 ms
+SAH: Leaves=1565 Internals=1564 MaxDepth=14 LeafSizes=[2, 15]
+SAH build time: 105 ms
+SAH render time: 37395 ms
+Total time: 37500 ms
 

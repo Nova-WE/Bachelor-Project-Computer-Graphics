@@ -3,15 +3,13 @@
 
 #include "rtweekend.h"
 
-class material;
-
-class hitRecord {
-public:
+struct hitRecord {
     glm::vec3 p;
     glm::vec3 normal;
     uint32_t matIndex;
     double t;
     bool frontFace;
+    float area = 0.0f;
 
     glm::vec2 uv;
 
@@ -21,6 +19,12 @@ public:
         frontFace = dot(r.direction(), outwardNormal) < 0;
         normal = frontFace ? outwardNormal : -outwardNormal;
     }
+};
+
+struct radianceRecord {
+    color radiance;
+    bool hitLight;
+    float lightPDF;
 };
 
 class hittable {
