@@ -1,0 +1,8 @@
+//
+// Created by eliasw on 19.11.26.
+//
+
+#ifndef BACHELORPROJECT_SAMPLING_H
+#define BACHELORPROJECT_SAMPLING_H
+
+#endif //BACHELORPROJECT_SAMPLING_H
