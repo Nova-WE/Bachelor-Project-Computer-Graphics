@@ -246,7 +246,7 @@ public:
                             mat.specular = 32.0f;
                         }
 
-                        std::cout << mat << std::endl;
+                        //std::cout << mat << std::endl;
 
                         materials.emplace_back(mat);
                         matIndex = static_cast<uint32_t>(materials.size() - 1);

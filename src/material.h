@@ -120,6 +120,13 @@ inline color getDiffuseColor(const Material &mat, const hitRecord &rec) {
     return diffuseComp;
 }
 
+inline glm::vec3 getNormal(const Material &mat, const hitRecord &rec) {
+    if (mat.normalTexture) {
+        return mat.normalTexture->sample(rec.uv.x, rec.uv.y);
+    }
+    return rec.normal;
+}
+
 inline bool scatterMaterial(const Material &mat,
                             const hitRecord &rec,
                             color &attenuation,
@@ -191,7 +198,7 @@ inline bool BRDF_ds(const Material &mat, const hitRecord &rec, color &attenuatio
             const glm::vec3 light = glm::normalize(inRay.direction());
             const glm::vec3 view = glm::normalize(-outRay.direction());
             const glm::vec3 half = glm::normalize(light + view);
-            const glm::vec3 normal = rec.normal;
+            const glm::vec3 normal = getNormal(mat, rec);
 
             const float cosThetaL = glm::max(0.0f, glm::dot(normal, light));
             const float cosThetaV = glm::max(0.0f, glm::dot(normal, view));
@@ -200,13 +207,14 @@ inline bool BRDF_ds(const Material &mat, const hitRecord &rec, color &attenuatio
 
             // Diffuse Component
             const float F_D90 = 0.5f + 2.0f * mat.roughness * cosThetaD * cosThetaD;
-            color f_d = mat.baseColor / pi;
+            color baseColor = getDiffuseColor(mat, rec);
+            color f_d = baseColor / pi;
             f_d *= 1.0f + (F_D90 - 1.0f) * glm::pow(1.0f - cosThetaL, 5.0f);
             f_d *= 1.0f + (F_D90 - 1.0f) * glm::pow(1.0f - cosThetaV, 5.0f);
             const color diffuse = (1.0f - mat.metallic) * f_d;
 
             // Specular Component
-            const color F0 = glm::mix(0.08f * mat.specular * mat.specularTint, mat.baseColor, mat.metallic);
+            const color F0 = glm::mix(0.08f * mat.specular * mat.specularTint, baseColor, mat.metallic);
             // Distribution Term GGX
             const float D_GGX = Distribution_GGX(mat, cosThetaH);
 

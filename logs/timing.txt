@@ -1,7 +1,7 @@
-Timing Log of: ../models/CornellBoxSphere.obj
+Timing Log of: ../models/spozna/spozna.obj
  
-SAH: Leaves=1565 Internals=1564 MaxDepth=14 LeafSizes=[2, 15]
-SAH build time: 105 ms
-SAH render time: 37395 ms
-Total time: 37500 ms
+SAH: Leaves=26177 Internals=26176 MaxDepth=26 LeafSizes=[1, 30]
+SAH build time: 1965 ms
+SAH render time: 3931632 ms
+Total time: 3933597 ms
 

@@ -68,6 +68,18 @@ static void runDepthTest(camera cam) {
     r.depthTest(*model, cam);
 }
 
+static void renderSpozna(camera cam) {
+    cam.imageWidth = 1000;
+    cam.aspectRatio = 16.0 / 9.0;
+    cam.vFov = 50.0f;
+    cam.backgroundColor = SKY;
+
+    constexpr auto modelPath = "../models/spozna/spozna.obj";
+    const auto model = make_shared<triangleModel>(modelPath);
+    const Rendering r(modelPath);
+    r.fastRender(modelPath, *model, cam, "/Disney.png");
+}
+
 int main(const int argc, char **argv) {
     if (argc > 1) {
         if (std::strcmp(argv[1], "--seed") == 0 && argc > 2) {
@@ -87,11 +99,11 @@ int main(const int argc, char **argv) {
     // set view axis to -Y on export in Blender !!!!
     camera cam;
     cam.maxDepth = 4;
-    cam.samplesPerPixel = 5;
+    cam.samplesPerPixel = 100;
     cam.samplesPerBounce = 1;
     cam.nextEventEstimation = true;
 
-    renderCornellBox(cam);
+    renderSpozna(cam);
 
     //runDepthTest(cam);
 
