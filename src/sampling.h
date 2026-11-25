@@ -51,7 +51,7 @@ public:
         const double phi = 2 * pi * eta_1;
 
         const double temp = glm::pow(alpha_sq, 1 - gamma) * (1 - eta_2) + eta_2;
-        const double cosTheta = glm::sqrt((1 - glm::pow(temp, 1.0 / (1.0 - gamma))) / (1 - alpha_sq));
+        const double cosTheta = sqrt((1 - eta_2) / (1 - eta_2 + eta_2 * alpha_sq));
         const double sinTheta = glm::sqrt(1 - cosTheta * cosTheta);
 
         const double x = sinTheta * glm::cos(phi);

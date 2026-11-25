@@ -1,7 +1,7 @@
-Timing Log of: ../models/spozna/spozna.obj
+Timing Log of: ../models/MaterialTest.obj
  
-SAH: Leaves=26177 Internals=26176 MaxDepth=26 LeafSizes=[1, 30]
-SAH build time: 1965 ms
-SAH render time: 3931632 ms
-Total time: 3933597 ms
+SAH: Leaves=2877 Internals=2876 MaxDepth=14 LeafSizes=[5, 15]
+SAH build time: 184 ms
+SAH render time: 10261 ms
+Total time: 10445 ms
 

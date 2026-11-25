@@ -391,14 +391,8 @@ private:
     }
 
     static float specularProbability(const Material &mat, const ray &r, const hitRecord &rec) {
-        if (mat.roughness <= 1e-2f &&
-            mat.transmittance != color(0.0f, 0.0f, 0.0f, 1.0f) &&
-            mat.refraction > 1.0f) {
+        if (mat.transmittance != color(0.0f, 0.0f, 0.0f, 1.0f) && mat.refraction > 1.0f) {
             return 1.0f;
-        }
-
-        if (mat.roughness == 0.0f) {
-            return 1.0f; // perfect mirror
         }
 
         const float cosTheta = glm::clamp(

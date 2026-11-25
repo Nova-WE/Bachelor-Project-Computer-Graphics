@@ -80,6 +80,43 @@ static void renderSpozna(camera cam) {
     r.fastRender(modelPath, *model, cam, "/Disney.png");
 }
 
+static void renderVeachMISTest(camera cam) {
+    cam.imageWidth = 1000;
+    cam.aspectRatio = 1.0;
+    cam.vFov = 40.0f;
+    cam.backgroundColor = BLACK;
+
+    constexpr auto modelPath = "../models/VeachReflectionTest.obj";
+    const auto model = make_shared<triangleModel>(modelPath);
+    const Rendering r(modelPath);
+    r.fastRender(modelPath, *model, cam, "/Disney.png");
+}
+
+static void renderLivingRoom(camera cam) {
+    cam.imageWidth = 1000;
+    cam.aspectRatio = 16.0 / 9.0;
+    cam.vFov = 40.0f;
+    cam.backgroundColor = BLACK;
+
+    constexpr auto modelPath = "../models/livingRoom/livingRoom.obj";
+    const auto model = make_shared<triangleModel>(modelPath);
+    const Rendering r(modelPath);
+    r.fastRender(modelPath, *model, cam, "/Disney.png");
+}
+
+static void renderMaterialTest(camera cam) {
+    cam.imageWidth = 1000;
+    cam.aspectRatio = 3.0 / 1.0;
+    cam.vFov = 14.0f;
+    cam.backgroundColor = color(0.1, 0.1, 0.1, 1.0);
+
+    constexpr auto modelPath = "../models/MaterialTest.obj";
+    const auto model = make_shared<triangleModel>(modelPath);
+    const Rendering r(modelPath);
+    r.fastRender(modelPath, *model, cam, "/Disney.png");
+}
+
+
 int main(const int argc, char **argv) {
     if (argc > 1) {
         if (std::strcmp(argv[1], "--seed") == 0 && argc > 2) {
@@ -98,12 +135,12 @@ int main(const int argc, char **argv) {
 
     // set view axis to -Y on export in Blender !!!!
     camera cam;
-    cam.maxDepth = 4;
-    cam.samplesPerPixel = 100;
+    cam.maxDepth = 3;
+    cam.samplesPerPixel = 40;
     cam.samplesPerBounce = 1;
     cam.nextEventEstimation = true;
 
-    renderSpozna(cam);
+    renderMaterialTest(cam);
 
     //runDepthTest(cam);
 
