@@ -23,6 +23,7 @@ public:
     int maxDepth = 20;
 
     bool nextEventEstimation = true;
+    bool russianRoulette = true;
 
     double vFov = 23.0;
     glm::vec3 lookFrom = glm::vec3(0, 0, 0);
@@ -39,7 +40,7 @@ public:
         initialize();
 
         // Render final image
-        std::vector<unsigned char> data(imageWidth * imageHeight * 3);
+        std::vector<glm::vec3> framebuffer(imageWidth * imageHeight);
 
         std::atomic<int> completedScanLines{0};
 
@@ -55,8 +56,8 @@ public:
                     pixelColor += rayColorRecursive(r, maxDepth, world, lights, materials, samplesPerBounce,
                                                     color(1.0f)).radiance;
                 }
-                const int index = (j * imageWidth + i) * 3;
-                write_color(data, index, pixelColor * pixelSampleScale);
+                const int index = (j * imageWidth + i);
+                framebuffer.at(index) = pixelColor * pixelSampleScale;
             }
 
             int done = completedScanLines++;
@@ -67,7 +68,10 @@ public:
                 }
             }
         }
-        stbi_write_png(outputPath, imageWidth, imageHeight, 3, data.data(), imageWidth * 3);
+
+        const auto color_data = toneMapping(framebuffer);
+
+        stbi_write_png(outputPath, imageWidth, imageHeight, 3, color_data.data(), imageWidth * 3);
         std::clog << "\rDone.                   \n";
     }
 
@@ -428,19 +432,29 @@ private:
                                                    const int recursiveSamples, color throughput) const {
         float survivalProbability = 1.0f;
         // start russian roulette
-        if (depth < 0) {
-            survivalProbability = glm::clamp(glm::max(throughput.r, glm::max(throughput.g, throughput.b)), 0.05f,
-                                             0.95f);
-        }
-        if (randomDouble() > survivalProbability) {
-            return {
-                .radiance = color(0.0f, 0.0f, 0.0f, 1.0f),
-                .hitLight = false,
-                .lightPDF = 0.0f
-            };
-        }
+        if (russianRoulette) {
+            if (depth < 0) {
+                survivalProbability = glm::clamp(glm::max(throughput.r, glm::max(throughput.g, throughput.b)), 0.05f,
+                                                 0.95f);
+            }
+            if (randomDouble() > survivalProbability) {
+                return {
+                    .radiance = color(0.0f, 0.0f, 0.0f, 1.0f),
+                    .hitLight = false,
+                    .lightPDF = 0.0f
+                };
+            }
 
-        throughput /= survivalProbability;
+            throughput /= survivalProbability;
+        } else {
+            if (depth < 0) {
+                return {
+                    .radiance = color(0.0f, 0.0f, 0.0f, 1.0f),
+                    .hitLight = false,
+                    .lightPDF = 0.0f
+                };
+            }
+        }
 
 
         if (hitRecord rec{}; world.hit(r, interval(0.001, infinity), rec)) {
@@ -516,12 +530,12 @@ private:
                                                         recursiveSamples, throughput);
 
                 const float pdfLight = incoming.hitLight ? incoming.lightPDF : 0.0f;
-                const float denominator = pdf * pdf + pdfLight * pdfLight;
-                const float w_brdf = denominator > 0.0f ? (pdf * pdf) / denominator : 1.0f;
+                const float denominator = pdf + pdfLight;
+                const float w_brdf = denominator > 0.0f ? pdf / denominator : 1.0f;
 
-                const float russianRoulette = depth < 0 ? 1.0f / survivalProbability : 1.0f;
+                const float w_rr = depth < 0 ? 1.0f / survivalProbability : 1.0f;
 
-                indirect += russianRoulette * w_brdf * brdf * incoming.radiance * NoL / pdf;
+                indirect += w_rr * w_brdf * brdf * incoming.radiance * NoL / pdf;
             }
 
             return {

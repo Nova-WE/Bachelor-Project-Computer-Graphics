@@ -28,7 +28,7 @@ static void renderCornellBox(camera cam) {
     constexpr auto modelPath = "../models/CornellBoxSphere.obj";
     const auto model = make_shared<triangleModel>(modelPath);
     const Rendering r(modelPath);
-    r.fastRender(modelPath, *model, cam, "/Disney.png");
+    r.fastRender(modelPath, *model, cam, "/Balance.png");
 }
 
 static void renderCornellSpheres(camera cam) {
@@ -133,14 +133,17 @@ int main(const int argc, char **argv) {
         }
     }
 
+    setRandomSeed(123456789); // Default seed for reproducibility
+
     // set view axis to -Y on export in Blender !!!!
     camera cam;
     cam.maxDepth = 3;
-    cam.samplesPerPixel = 40;
+    cam.samplesPerPixel = 1;
     cam.samplesPerBounce = 1;
     cam.nextEventEstimation = true;
+    cam.russianRoulette = false;
 
-    renderMaterialTest(cam);
+    renderCornellBox(cam);
 
     //runDepthTest(cam);
 

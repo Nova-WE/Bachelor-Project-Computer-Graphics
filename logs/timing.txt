@@ -1,7 +1,7 @@
-Timing Log of: ../models/MaterialTest.obj
+Timing Log of: ../models/CornellBoxSphere.obj
  
-SAH: Leaves=2877 Internals=2876 MaxDepth=14 LeafSizes=[5, 15]
-SAH build time: 184 ms
-SAH render time: 10261 ms
-Total time: 10445 ms
+SAH: Leaves=1565 Internals=1564 MaxDepth=14 LeafSizes=[2, 15]
+SAH build time: 107 ms
+SAH render time: 5516 ms
+Total time: 5623 ms
 

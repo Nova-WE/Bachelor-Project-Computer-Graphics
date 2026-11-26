@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
 def uniform_hemisphere_sampling(num_samples=5000):
     eta1 = np.random.uniform(0, 1, num_samples)
     eta2 = np.random.uniform(0, 1, num_samples)
@@ -44,6 +43,22 @@ def uniform_triangle_sampling(num_samples=5000):
 
     return u, v, 1 - u - v
 
+def specular_gtr(a, num_samples=2000):
+    eta1 = np.random.uniform(0, 1, num_samples)
+    eta2 = np.random.uniform(0, 1, num_samples)
+
+    alpha_sq = a * a
+
+    phi = 2 * np.pi * eta1
+    cosTheta = np.sqrt((1 - eta2) / (1 - eta2 + eta2 * alpha_sq))
+    sinTheta = np.sqrt(1 - cosTheta * cosTheta)
+
+    x = sinTheta * np.cos(phi)
+    y = sinTheta * np.sin(phi)
+    z = cosTheta
+
+    return x, y, z
+
 
 def plot_hemisphere_samples(title, x, y, z):
     fig = plt.figure()
@@ -59,4 +74,6 @@ def plot_hemisphere_samples(title, x, y, z):
 if __name__ == "__main__":
     #plot_hemisphere_samples("Uniform Hemisphere Sampling", *uniform_hemisphere_sampling(2000))
     #plot_hemisphere_samples("Cosine Hemisphere Sampling", *cosine_hemisphere_sampling(2000))
-    plot_hemisphere_samples("Uniform Triangle Sampling", *uniform_triangle_sampling(2000))
+    #plot_hemisphere_samples("Uniform Triangle Sampling", *uniform_triangle_sampling(2000))
+    roughness = 0.1
+    plot_hemisphere_samples("Specular GTR Sampling", *specular_gtr(roughness ** 2, 2000))
